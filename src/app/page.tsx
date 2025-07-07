@@ -5,14 +5,6 @@ import { optimizeSchedule } from "@/ai/flows/optimize-schedule";
 import type { Task } from "./types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -285,69 +277,51 @@ export default function Home() {
           </div>
         </header>
         <main className="flex-grow overflow-auto p-4">
-          <div className="border rounded-lg shadow-sm">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[60px]">Suppr.</TableHead>
-                  <TableHead className="w-[150px] text-center">Tâche</TableHead>
-                  <TableHead className="w-[100px]">Durée (j)</TableHead>
-                  <TableHead>Prédécesseurs</TableHead>
-                  <TableHead>Successeurs</TableHead>
-                  <TableHead className="w-[120px] text-center">Début (Tôt / Tard)</TableHead>
-                  <TableHead className="w-[120px] text-center">Fin (Tôt / Tard)</TableHead>
-                  <TableHead className="w-[80px] text-center">Marge</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tasks.map((task) => (
-                  <TableRow key={task.id} 
-                    data-critical={task.isCritical} 
-                    data-highlight={highlightedTaskId === task.id}
-                    className="data-[critical=true]:bg-primary/10 data-[highlight=true]:bg-accent/20 transition-colors duration-500"
-                  >
-                    <TableCell>
-                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => handleDeleteTask(task.id)}>
-                            <Trash2 className="h-4 w-4"/>
+          <div className="flex flex-row flex-wrap gap-4">
+            {tasks.map((task) => (
+              <div 
+                key={task.id}
+                data-critical={task.isCritical} 
+                data-highlight={highlightedTaskId === task.id}
+                className="relative border rounded-lg shadow-sm w-48 flex flex-col transition-colors duration-500 data-[critical=true]:bg-primary/10 data-[highlight=true]:bg-accent/20"
+              >
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-6 w-6 text-muted-foreground hover:text-destructive z-10" onClick={() => handleDeleteTask(task.id)}>
+                            <Trash2 className="h-3 w-3"/>
                         </Button>
-                    </TableCell>
-                    <TableCell className="font-bold text-center align-middle">
-                      {task.name}
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        value={task.duration}
-                        onChange={(e) => handleUpdateTask(task.id, 'duration', parseInt(e.target.value) || 0)}
-                         className="bg-transparent border-0 focus-visible:ring-1 w-20"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        value={task.predecessors}
-                        onChange={(e) => handleUpdateTask(task.id, 'predecessors', e.target.value)}
-                        placeholder="ex: A, B"
-                         className="bg-transparent border-0 focus-visible:ring-1"
-                      />
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{task.successors.join(', ')}</TableCell>
-                    <TableCell className="p-2">
-                      <div className="flex flex-col divide-y divide-border border rounded-md">
-                        <span className="text-center font-mono px-2 py-1">{task.es}</span>
-                        <span className="text-center font-mono px-2 py-1">{task.ls}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="p-2">
-                      <div className="flex flex-col divide-y divide-border border rounded-md">
-                        <span className="text-center font-mono px-2 py-1">{task.ef}</span>
-                        <span className="text-center font-mono px-2 py-1">{task.lf}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-center">{task.float}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Supprimer la tâche</p>
+                    </TooltipContent>
+                </Tooltip>
+
+                <div className="grid grid-cols-[1fr,auto,1fr] text-center border-b font-mono">
+                  <span className={`p-2 ${task.isCritical ? 'text-destructive font-bold' : ''}`}>{task.es}</span>
+                  <div className="p-2 font-bold text-base text-foreground border-x flex items-center justify-center">{task.name}</div>
+                  <span className={`p-2 ${task.isCritical ? 'text-destructive font-bold' : ''}`}>{task.ef}</span>
+                </div>
+
+                <div className="grid grid-cols-[1fr,auto,1fr] text-center items-center font-mono">
+                  <span className="p-2">{task.ls}</span>
+                  <div className="border-x h-full flex flex-col justify-center items-center p-1 text-xs">
+                    <Input
+                      value={task.predecessors}
+                      onChange={(e) => handleUpdateTask(task.id, 'predecessors', e.target.value)}
+                      placeholder="Preds."
+                      className="bg-transparent border-0 focus-visible:ring-0 text-center h-6 p-0 w-full"
+                    />
+                    <Input
+                      type="number"
+                      value={task.duration}
+                      onChange={(e) => handleUpdateTask(task.id, 'duration', parseInt(e.target.value) || 0)}
+                      className="bg-transparent border-0 focus-visible:ring-0 text-center h-6 p-0 w-16 font-bold"
+                    />
+                  </div>
+                  <span className="p-2">{task.lf}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </main>
         <Toaster />
