@@ -32,13 +32,13 @@ import {
 } from "@/components/ui/tooltip";
 
 const INITIAL_TASKS: Task[] = [
-  { id: '1', name: 'Plan Project', duration: 3, predecessors: '', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-  { id: '2', name: 'Design UI', duration: 4, predecessors: 'Plan Project', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-  { id: '3', name: 'Develop Backend', duration: 5, predecessors: 'Plan Project', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-  { id: '4', name: 'Develop Frontend', duration: 5, predecessors: 'Design UI', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-  { id: '5', name: 'Integrate Frontend/Backend', duration: 3, predecessors: 'Develop Backend, Develop Frontend', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-  { id: '6', name: 'Testing', duration: 4, predecessors: 'Integrate Frontend/Backend', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-  { id: '7', name: 'Deploy', duration: 2, predecessors: 'Testing', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+  { id: '1', name: 'A', duration: 3, predecessors: '', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+  { id: '2', name: 'B', duration: 4, predecessors: 'A', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+  { id: '3', name: 'C', duration: 5, predecessors: 'A', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+  { id: '4', name: 'D', duration: 5, predecessors: 'B', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+  { id: '5', name: 'E', duration: 3, predecessors: 'C, D', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+  { id: '6', name: 'F', duration: 4, predecessors: 'E', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+  { id: '7', name: 'G', duration: 2, predecessors: 'F', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
 ];
 
 export default function Home() {
@@ -116,7 +116,7 @@ export default function Home() {
     })));
     setEsStep(-1);
     setLsStep(-1);
-    toast({ title: "Calculations Reset", description: "All schedule data has been cleared." });
+    toast({ title: "Calculs réinitialisés", description: "Toutes les données de planning ont été effacées." });
   }, [toast]);
 
   const handleUpdateTask = (id: string, field: keyof Task, value: any) => {
@@ -128,16 +128,33 @@ export default function Home() {
   };
 
   const handleAddTask = () => {
-    const newId = (Math.max(...tasks.map(t => parseInt(t.id)), 0) + 1).toString();
+    const newId = (tasks.length > 0 ? Math.max(...tasks.map(t => parseInt(t.id, 10))) : 0) + 1).toString();
+
+    const existingNames = new Set(tasks.map(t => t.name));
+    let newName = '';
+    for (let i = 0; ; i++) {
+        let temp = i;
+        let name = '';
+        while (temp >= 0) {
+            name = String.fromCharCode(temp % 26 + 65) + name;
+            temp = Math.floor(temp / 26) - 1;
+        }
+        if (!existingNames.has(name)) {
+            newName = name;
+            break;
+        }
+    }
+
     const newTask: Task = {
       id: newId,
-      name: `New Task ${newId}`,
+      name: newName,
       duration: 1,
       predecessors: '',
       successors: [],
       es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false
     };
     setTasks([...tasks, newTask]);
+    handleReset();
   };
   
   const handleDeleteTask = (id: string) => {
@@ -157,7 +174,7 @@ export default function Home() {
 
   const handleEsStep = () => {
     if (esStep >= sortedTasks.length - 1) {
-      toast({ title: "Earliest Start/Finish Calculated", description: "All tasks have been processed." });
+      toast({ title: "Calcul des dates au plus tôt terminé", description: "Toutes les tâches ont été traitées." });
       return;
     }
 
@@ -178,11 +195,11 @@ export default function Home() {
   const handleLsStep = () => {
     const esDone = esStep === tasks.length - 1;
     if (!esDone) {
-      toast({ variant: "destructive", title: "Prerequisite not met", description: "Please complete Earliest Date calculations first." });
+      toast({ variant: "destructive", title: "Prérequis non satisfait", description: "Veuillez d'abord terminer le calcul des dates au plus tôt." });
       return;
     }
     if (lsStep >= sortedTasks.length - 1) {
-      toast({ title: "Latest Start/Finish Calculated", description: "All tasks have been processed. Float and Critical Path updated." });
+      toast({ title: "Calcul des dates au plus tard terminé", description: "Toutes les tâches ont été traitées. La marge et le chemin critique sont à jour." });
       return;
     }
 
@@ -209,7 +226,7 @@ export default function Home() {
     try {
       const response = await optimizeSchedule({
         tasks: tasks.map(({ name, duration, predecessors }) => ({ name, duration, predecessors: predecessors.split(',').map(p => p.trim()).filter(Boolean) })),
-        projectDescription: "Optimize this project schedule for minimum duration.",
+        projectDescription: "Optimiser ce planning de projet pour une durée minimale.",
       });
 
       const newTasks = response.optimizedTasks.map((t, i) => ({
@@ -222,10 +239,10 @@ export default function Home() {
 
       setTasks(newTasks);
       handleReset();
-      toast({ title: "AI Schedule Optimized", description: response.summary, duration: 8000 });
+      toast({ title: "Planning optimisé par l'IA", description: response.summary, duration: 8000 });
     } catch (e) {
       console.error(e);
-      toast({ variant: "destructive", title: "Optimization Failed", description: "An error occurred while communicating with the AI." });
+      toast({ variant: "destructive", title: "L'optimisation a échoué", description: "Une erreur est survenue lors de la communication avec l'IA." });
     } finally {
       setIsOptimizing(false);
     }
@@ -238,33 +255,33 @@ export default function Home() {
     <TooltipProvider>
       <div className="flex flex-col h-screen bg-background text-foreground font-body antialiased">
         <header className="flex items-center justify-between p-4 border-b shrink-0">
-          <h1 className="text-2xl font-bold text-primary font-headline">Task Scheduler Pro</h1>
+          <h1 className="text-2xl font-bold text-primary font-headline">Planificateur de Tâches Pro</h1>
           <div className="flex items-center gap-2">
             {isCyclic && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center gap-2 text-destructive-foreground bg-destructive p-2 rounded-md">
                     <AlertCircle className="h-5 w-5" />
-                    <span className="font-semibold">Cyclic Dependency Detected!</span>
+                    <span className="font-semibold">Dépendance Cyclique Détectée!</span>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Calculations are disabled. Please resolve the loop in your tasks.</p>
+                  <p>Les calculs sont désactivés. Veuillez résoudre la boucle dans vos tâches.</p>
                 </TooltipContent>
               </Tooltip>
             )}
-            <Button onClick={handleAddTask} variant="outline" size="sm"><PlusCircle className="mr-2" />Add Task</Button>
+            <Button onClick={handleAddTask} variant="outline" size="sm"><PlusCircle className="mr-2" />Ajouter Tâche</Button>
             <Button onClick={handleOptimize} disabled={isOptimizing || isCyclic} variant="outline" size="sm">
               {isOptimizing ? <Loader className="mr-2 animate-spin" /> : <BrainCircuit className="mr-2" />}
-              AI Schedule Optimizer
+              Optimiseur de Planning (IA)
             </Button>
             <Button onClick={handleEsStep} disabled={allEsDone || isCyclic} size="sm">
-              <Play className="mr-2"/> Earliest ({esStep + 1}/{tasks.length})
+              <Play className="mr-2"/> Au plus tôt ({esStep + 1}/{tasks.length})
             </Button>
             <Button onClick={handleLsStep} disabled={!allEsDone || allLsDone || isCyclic} size="sm">
-              <Play className="mr-2"/> Latest ({lsStep + 1}/{tasks.length})
+              <Play className="mr-2"/> Au plus tard ({lsStep + 1}/{tasks.length})
             </Button>
-            <Button onClick={handleReset} variant="destructive" size="sm"><RotateCcw className="mr-2" />Reset</Button>
+            <Button onClick={handleReset} variant="destructive" size="sm"><RotateCcw className="mr-2" />Réinitialiser</Button>
           </div>
         </header>
         <main className="flex-grow overflow-auto p-4">
@@ -272,16 +289,14 @@ export default function Home() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[40px]">Del</TableHead>
-                  <TableHead className="w-[200px]">Task Name</TableHead>
-                  <TableHead className="w-[100px]">Duration</TableHead>
-                  <TableHead>Predecessors</TableHead>
-                  <TableHead>Successors</TableHead>
-                  <TableHead className="w-[80px]">ES</TableHead>
-                  <TableHead className="w-[80px]">EF</TableHead>
-                  <TableHead className="w-[80px]">LS</TableHead>
-                  <TableHead className="w-[80px]">LF</TableHead>
-                  <TableHead className="w-[80px]">Float</TableHead>
+                  <TableHead className="w-[60px]">Suppr.</TableHead>
+                  <TableHead className="w-[150px]">Tâche</TableHead>
+                  <TableHead className="w-[100px]">Durée (j)</TableHead>
+                  <TableHead>Prédécesseurs</TableHead>
+                  <TableHead>Successeurs</TableHead>
+                  <TableHead className="w-[180px] text-center">Début (Tôt / Tard)</TableHead>
+                  <TableHead className="w-[180px] text-center">Fin (Tôt / Tard)</TableHead>
+                  <TableHead className="w-[80px] text-center">Marge</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -300,7 +315,8 @@ export default function Home() {
                       <Input
                         value={task.name}
                         onChange={(e) => handleUpdateTask(task.id, 'name', e.target.value)}
-                        className="bg-transparent border-0 focus-visible:ring-1"
+                        className="bg-transparent border-0 focus-visible:ring-1 font-bold"
+                        readOnly
                       />
                     </TableCell>
                     <TableCell>
@@ -315,16 +331,24 @@ export default function Home() {
                       <Input
                         value={task.predecessors}
                         onChange={(e) => handleUpdateTask(task.id, 'predecessors', e.target.value)}
-                        placeholder="e.g., Task 1, Task 2"
+                        placeholder="ex: A, B"
                          className="bg-transparent border-0 focus-visible:ring-1"
                       />
                     </TableCell>
                     <TableCell className="text-muted-foreground">{task.successors.join(', ')}</TableCell>
-                    <TableCell className="font-mono">{task.es}</TableCell>
-                    <TableCell className="font-mono">{task.ef}</TableCell>
-                    <TableCell className="font-mono">{task.ls}</TableCell>
-                    <TableCell className="font-mono">{task.lf}</TableCell>
-                    <TableCell className="font-mono">{task.float}</TableCell>
+                    <TableCell>
+                      <div className="flex divide-x divide-border border rounded-md">
+                        <span className="w-1/2 text-center font-mono p-2">{task.es}</span>
+                        <span className="w-1/2 text-center font-mono p-2">{task.ls}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex divide-x divide-border border rounded-md">
+                        <span className="w-1/2 text-center font-mono p-2">{task.ef}</span>
+                        <span className="w-1/2 text-center font-mono p-2">{task.lf}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-mono text-center">{task.float}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

@@ -28,7 +28,7 @@ export type OptimizeScheduleInput = z.infer<typeof OptimizeScheduleInputSchema>;
 // Define the output schema for the optimizeSchedule function
 const OptimizeScheduleOutputSchema = z.object({
   optimizedTasks: z.array(TaskSchema).describe('An array of tasks representing the AI-optimized project schedule.'),
-  summary: z.string().describe('A summary of the changes made to the schedule and the reasons for those changes.'),
+  summary: z.string().describe("Un résumé en français des changements apportés au planning et les raisons de ces changements."),
 });
 export type OptimizeScheduleOutput = z.infer<typeof OptimizeScheduleOutputSchema>;
 
@@ -42,23 +42,23 @@ const optimizeSchedulePrompt = ai.definePrompt({
   name: 'optimizeSchedulePrompt',
   input: {schema: OptimizeScheduleInputSchema},
   output: {schema: OptimizeScheduleOutputSchema},
-  prompt: `You are an AI project management assistant tasked with optimizing project schedules.
+  prompt: `Vous êtes un assistant de gestion de projet IA chargé d'optimiser les plannings de projet.
 
-You are given the current project schedule, which consists of a list of tasks. Each task has a name, duration, and a list of predecessors (tasks that must be completed before it can start).
+On vous donne le planning actuel du projet, qui consiste en une liste de tâches. Chaque tâche a un nom, une durée et une liste de prédécesseurs (tâches qui doivent être terminées avant que cette tâche puisse commencer).
 
-Your goal is to re-optimize the schedule to minimize the overall project duration and improve efficiency. Consider task dependencies, potential parallelization, and resource allocation.
+Votre objectif est de ré-optimiser le planning pour minimiser la durée totale du projet et améliorer l'efficacité. Tenez compte des dépendances des tâches, de la parallélisation potentielle et de l'allocation des ressources.
 
-Project Description (if available): {{{projectDescription}}}
+Description du projet (si disponible) : {{{projectDescription}}}
 
-Current Schedule:
+Planning actuel :
 {{#each tasks}}
-  - Name: {{name}}, Duration: {{duration}} days, Predecessors: {{predecessors}}
+  - Nom : {{name}}, Durée : {{duration}} jours, Prédécesseurs : {{predecessors}}
 {{/each}}
 
-Provide the optimized schedule in the same format as the input, including a summary of the changes made and the reasons for those changes.
+Fournissez le planning optimisé dans le même format que l'entrée, y compris un résumé en français des changements apportés et des raisons de ces changements.
 
-Optimized Schedule:
-`, // The AI will generate the optimized schedule in the format defined by OptimizeScheduleOutputSchema
+Planning Optimisé :
+`,
 });
 
 // Define the Genkit flow for optimizing the schedule
