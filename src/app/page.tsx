@@ -45,8 +45,7 @@ const INITIAL_TASKS: Task[] = [
     { id: 'F', name: 'F', duration: 0, predecessors: 'u,v,w', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
 ];
 
-const CalculationCell = ({ task, allTasks }: { task: Task; allTasks: Task[] }) => {
-    // Get predecessor tasks with their most up-to-date data from allTasks
+const CalculationCell = ({ task, allTasks, calculationMode }: { task: Task; allTasks: Task[], calculationMode: 'earliest' | 'latest' }) => {
     const predecessorTasks = task.predecessors
         .split(',')
         .map(p => p.trim())
@@ -60,10 +59,10 @@ const CalculationCell = ({ task, allTasks }: { task: Task; allTasks: Task[] }) =
     );
 
     const textClasses = (isCrit: boolean) => cn(isCrit ? "text-destructive font-bold" : "font-normal");
+    const latestTextClasses = (isCrit: boolean) => cn(isCrit ? "text-destructive font-bold" : "text-blue-600 font-bold");
 
     return (
         <div className={cellClasses} style={{ minHeight: '150px' }}>
-            {/* Top section: ES, task name, duration, EF */}
             <div className={cn("p-2 text-center border-b border-black", task.isCritical && "border-destructive")}>
                 <div className="flex justify-between items-center">
                     <span className={cn(textClasses(task.isCritical), "font-bold")}>{task.es ?? ''}</span>
@@ -73,7 +72,6 @@ const CalculationCell = ({ task, allTasks }: { task: Task; allTasks: Task[] }) =
                 </div>
             </div>
 
-            {/* Middle part: Predecessors list if they exist */}
             <div className="p-2 flex-grow flex flex-col justify-center">
                 {predecessorTasks.map(p => (
                     <div key={p.id} className={cn("flex justify-around text-sm", textClasses(p.isCritical))}>
@@ -84,12 +82,11 @@ const CalculationCell = ({ task, allTasks }: { task: Task; allTasks: Task[] }) =
                 ))}
             </div>
             
-            {/* Bottom part: LS, Float, LF */}
             <div className={cn("p-2 text-center border-t border-black", task.isCritical && "border-destructive")}>
                  <div className="flex justify-between items-center">
-                    <span className={cn(textClasses(task.isCritical), "font-bold")}>{task.ls ?? ''}</span>
+                    <span className={cn(latestTextClasses(task.isCritical), "font-bold")}>{task.ls ?? ''}</span>
                     <span className="text-sm text-muted-foreground">{task.float !== null ? `marge=${task.float}` : ''}</span>
-                    <span className={cn(textClasses(task.isCritical), "font-bold")}>{task.lf ?? ''}</span>
+                    <span className={cn(latestTextClasses(task.isCritical), "font-bold")}>{task.lf ?? ''}</span>
                 </div>
             </div>
         </div>
@@ -97,7 +94,7 @@ const CalculationCell = ({ task, allTasks }: { task: Task; allTasks: Task[] }) =
 };
 
 
-const CalculationView = ({ tasks, criticalPath }: { tasks: Task[], criticalPath: string | null }) => {
+const CalculationView = ({ tasks, criticalPath, calculationMode }: { tasks: Task[], criticalPath: string | null, calculationMode: 'earliest' | 'latest' }) => {
     if (tasks.length === 0) {
         return <div className="p-8 text-center text-muted-foreground">Aucune tâche à afficher.</div>
     }
@@ -106,7 +103,7 @@ const CalculationView = ({ tasks, criticalPath }: { tasks: Task[], criticalPath:
             <div className="overflow-x-auto pb-4">
                 <div className="flex flex-nowrap gap-px bg-black border border-black p-px">
                      {tasks.map(task => (
-                        <CalculationCell key={task.id} task={task} allTasks={tasks} />
+                        <CalculationCell key={task.id} task={task} allTasks={tasks} calculationMode={calculationMode}/>
                     ))}
                 </div>
             </div>
@@ -129,70 +126,56 @@ export default function Home() {
     const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
     const [criticalPath, setCriticalPath] = useState<string | null>(null);
 
-
-    const taskMap = useMemo(() => {
-        return tasks.reduce((acc, task) => {
-            acc[task.name] = task;
-            return acc;
-        }, {} as Record<string, Task>);
-    }, [tasks]);
-
     const { sortedTasks, isCyclic } = useMemo(() => {
-        const localTaskMap = new Map(tasks.map((task) => [task.id, { ...task }]));
-        const inDegree = new Map(tasks.map(task => [task.id, 0]));
+        const taskList = tasks.map(t => ({...t, successors: [] as string[]}));
+        const taskMapByName = new Map(taskList.map(t => [t.name, t]));
+        const inDegree = new Map(taskList.map(t => [t.name, 0]));
 
-        for (const task of tasks) {
+        for (const task of taskList) {
             const predNames = task.predecessors.split(',').map(p => p.trim()).filter(Boolean);
-            if (predNames.length > 0) {
-              inDegree.set(task.id, predNames.length);
-            }
             for (const predName of predNames) {
-                const predTask = taskMap[predName];
+                const predTask = taskMapByName.get(predName);
                 if (predTask) {
-                    const successorList = localTaskMap.get(predTask.id)!.successors;
-                    if (!successorList.includes(task.name)) {
-                       successorList.push(task.name);
+                    predTask.successors.push(task.name);
+                }
+            }
+        }
+        
+        for (const task of taskList) {
+            const predNames = task.predecessors.split(',').map(p => p.trim()).filter(Boolean);
+            inDegree.set(task.name, predNames.length);
+        }
+
+        const queue = taskList.filter(t => inDegree.get(t.name) === 0);
+        const sortedNames: string[] = [];
+
+        while (queue.length > 0) {
+            const currentTask = queue.shift()!;
+            sortedNames.push(currentTask.name);
+            
+            for (const successorName of currentTask.successors) {
+                const successorTask = taskMapByName.get(successorName);
+                if (successorTask) {
+                    inDegree.set(successorName, inDegree.get(successorName)! - 1);
+                    if (inDegree.get(successorName) === 0) {
+                        queue.push(successorTask);
                     }
                 }
             }
         }
         
-        const queue: Task[] = [];
-        // Find start nodes (those with no predecessors or whose only predecessor is the dummy 'D' task if it's the only one)
-        tasks.forEach(task => {
-            const predNames = task.predecessors.split(',').map(p => p.trim()).filter(Boolean);
-            if (predNames.length === 0) {
-                queue.push(task);
-            } else {
-                 inDegree.set(task.id, predNames.length);
-            }
+        const isCyclic = sortedNames.length !== tasks.length;
+        const finalSortedTasks = sortedNames.map(name => {
+            const stateTask = tasks.find(t => t.name === name)!;
+            const taskWithSuccessors = taskMapByName.get(name)!;
+            return {
+                ...stateTask,
+                successors: taskWithSuccessors.successors
+            };
         });
-        
-        // Handle case where D is the start node
-        const startNode = tasks.find(t => t.name === 'D');
-        if(startNode && !queue.find(q => q.id === startNode.id)) {
-            // This case is complex, let's stick to the simpler in-degree logic
-        }
 
-        const sorted: Task[] = [];
-        const processingQueue = tasks.filter(task => (inDegree.get(task.id) ?? 0) === 0);
-        
-        while (processingQueue.length > 0) {
-            const currentTask = processingQueue.shift()!;
-            sorted.push(tasks.find(t => t.id === currentTask.id)!);
-
-            const successors = tasks.filter(t => t.predecessors.split(',').map(p => p.trim()).includes(currentTask.name));
-            for (const successor of successors) {
-                const newInDegree = (inDegree.get(successor.id) ?? 1) - 1;
-                inDegree.set(successor.id, newInDegree);
-                if (newInDegree === 0) {
-                    processingQueue.push(successor);
-                }
-            }
-        }
-
-        return { sortedTasks: sorted, isCyclic: sorted.length !== tasks.length };
-    }, [tasks, taskMap]);
+        return { sortedTasks: finalSortedTasks, isCyclic };
+    }, [tasks]);
     
     const triggerHighlight = (taskId: string) => {
         setHighlightedTaskId(taskId);
@@ -213,8 +196,7 @@ export default function Home() {
         if (calculationMode === 'earliest') {
             handleEsStep();
         } else {
-            toast({variant: "destructive", title: "Non implémenté", description: "Le calcul des dates au plus tard n'est pas encore disponible."})
-            // handleLsStep();
+            handleLsStep();
         }
     };
     
@@ -232,7 +214,8 @@ export default function Home() {
 
             for(const currentTask of reversedSortedTasks) {
                 const taskInArr = newTasks.find(t => t.id === currentTask.id)!;
-                const succTasks = newTasks.filter(t => t.predecessors.split(',').map(p=>p.trim()).includes(currentTask.name));
+                const successors = sortedTasks.filter(t => t.predecessors.split(',').map(p => p.trim()).includes(currentTask.name));
+                const succTasks = newTasks.filter(t => successors.map(s => s.name).includes(t.name));
 
                 const lf = succTasks.length > 0 ? Math.min(...succTasks.map(s => s.ls ?? Infinity)) : projectFinishDate;
                 const ls = lf - taskInArr.duration;
@@ -252,7 +235,6 @@ export default function Home() {
                const predNames = task.predecessors.split(',').map(p => p.trim()).filter(Boolean);
                for (const predName of predNames) {
                    const predTask = newTasks.find(t => t.name === predName);
-                   // To be on the path, the predecessor must also be critical and its end time must link to our start time
                    if (predTask && Math.abs(predTask.float ?? 1) < 0.001 && predTask.ef === task.es) {
                        findPath(predName);
                    }
@@ -268,7 +250,7 @@ export default function Home() {
            setCriticalPath(criticalPathArray.join(' - '));
            
            setTasks(finalTasksWithCritical);
-           setStep(s => s + 1); // Mark as finished
+           setStep(s => s + 1);
            toast({ title: "Calcul terminé !", description: "Le chemin critique est maintenant affiché." });
            return;
         }
@@ -285,6 +267,45 @@ export default function Home() {
         setTasks(prev => prev.map(t => t.id === currentTask.id ? { ...t, es, ef, isCompleted: true } : t));
         setStep(newStep);
         triggerHighlight(currentTask.id);
+    };
+
+    const handleLsStep = () => {
+        const finalTaskInState = tasks.find(t => t.name === 'F');
+        if (!finalTaskInState?.ef) {
+            toast({ variant: "destructive", title: "Erreur", description: "Veuillez d'abord terminer le calcul 'Au plus tôt'." });
+            return;
+        }
+
+        const reversedSortedTasks = [...sortedTasks].reverse();
+        
+        if (step >= reversedSortedTasks.length - 1) {
+            toast({ title: "Calcul au plus tard terminé." });
+            setStep(s => s + 1);
+            return;
+        }
+
+        const newStep = step + 1;
+        const currentTaskInSort = reversedSortedTasks[newStep];
+        
+        let newTasks = [...tasks];
+        const taskIndex = newTasks.findIndex(t => t.id === currentTaskInSort.id);
+        const taskToUpdate = { ...newTasks[taskIndex] };
+
+        const successorTasks = currentTaskInSort.successors
+            .map(succName => newTasks.find(t => t.name === succName))
+            .filter((t): t is Task => !!t);
+
+        const lf = successorTasks.length > 0 
+            ? Math.min(...successorTasks.map(s => s.ls ?? Infinity)) 
+            : finalTaskInState.ef;
+            
+        const ls = lf - taskToUpdate.duration;
+
+        newTasks[taskIndex] = { ...taskToUpdate, ls, lf };
+        
+        setTasks(newTasks);
+        setStep(newStep);
+        triggerHighlight(currentTaskInSort.id);
     };
 
     const isFinished = step >= sortedTasks.length;
@@ -311,13 +332,13 @@ export default function Home() {
                         </Tooltip>
                     )}
                     <div className="flex flex-col items-center gap-4">
-                        <RadioGroup defaultValue="earliest" className="flex gap-4" onValueChange={(val: 'earliest' | 'latest') => setCalculationMode(val)} disabled={isCyclic || step > -1}>
+                        <RadioGroup defaultValue="earliest" className="flex gap-4" onValueChange={(val: 'earliest' | 'latest') => { setCalculationMode(val); setStep(-1); }} disabled={isCyclic || (step > -1 && !isFinished)}>
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="earliest" id="r1" />
                                 <Label htmlFor="r1">Au plus tôt & Chemin Critique</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="latest" id="r2" disabled/>
+                                <RadioGroupItem value="latest" id="r2" />
                                 <Label htmlFor="r2">Au plus tard</Label>
                             </div>
                         </RadioGroup>
@@ -330,12 +351,10 @@ export default function Home() {
                     </div>
                 </header>
 
-                <CalculationView tasks={sortedTasks} criticalPath={criticalPath} />
+                <CalculationView tasks={sortedTasks} criticalPath={criticalPath} calculationMode={calculationMode} />
 
                 <Toaster />
             </div>
         </TooltipProvider>
     );
 }
-
-    
