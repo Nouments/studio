@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -22,15 +23,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 const INITIAL_TASKS: Task[] = [
-  { id: '1', name: 'A', duration: 3, predecessors: '', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-  { id: '2', name: 'B', duration: 4, predecessors: 'A', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-  { id: '3', name: 'C', duration: 5, predecessors: 'A', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-  { id: '4', name: 'D', duration: 5, predecessors: 'B', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-  { id: '5', name: 'E', duration: 3, predecessors: 'C, D', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-  { id: '6', name: 'F', duration: 4, predecessors: 'E', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-  { id: '7', name: 'G', duration: 2, predecessors: 'F', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '1', name: 'A', duration: 7, predecessors: '', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '2', name: 'B', duration: 7, predecessors: 'A', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '3', name: 'C', duration: 15, predecessors: 'B', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '4', name: 'D', duration: 30, predecessors: 'C', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '5', name: 'E', duration: 45, predecessors: 'D', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '6', name: 'F', duration: 15, predecessors: 'E', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '7', name: 'G', duration: 45, predecessors: 'D', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
 ];
 
 export default function Home() {
@@ -268,68 +270,94 @@ export default function Home() {
               Optimiseur (IA)
             </Button>
             <Button onClick={handleEsStep} disabled={allEsDone || isCyclic} size="sm">
-              <Play className="mr-2"/> Au plus tôt ({esStep + 1}/{tasks.length})
+              <Play className="mr-2"/> Calculer au plus tôt
             </Button>
             <Button onClick={handleLsStep} disabled={!allEsDone || allLsDone || isCyclic} size="sm">
-              <Play className="mr-2"/> Au plus tard ({lsStep + 1}/{tasks.length})
+              <Play className="mr-2"/> Calculer au plus tard
             </Button>
             <Button onClick={handleReset} variant="destructive" size="sm"><RotateCcw className="mr-2" />Réinitialiser</Button>
           </div>
         </header>
         <main className="flex-grow overflow-auto p-4">
-          <div className="flex flex-row flex-wrap gap-4">
-            {tasks.map((task) => (
-              <div
-                key={task.id}
-                data-critical={task.isCritical}
-                data-highlight={highlightedTaskId === task.id}
-                className="relative border rounded-lg shadow-sm w-56 flex flex-col transition-all duration-300 data-[critical=true]:border-destructive data-[critical=true]:shadow-lg data-[critical=true]:shadow-destructive/20 data-[highlight=true]:bg-accent/20 data-[highlight=true]:scale-105"
-              >
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 text-muted-foreground hover:text-destructive z-10" onClick={() => handleDeleteTask(task.id)}>
-                            <Trash2 className="h-4 w-4"/>
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Supprimer la tâche</p>
-                    </TooltipContent>
-                </Tooltip>
-
-                <div className="grid grid-cols-2 text-center border-b font-mono text-sm">
-                    <div className={`p-2 border-r ${task.isCritical ? 'text-destructive font-bold' : ''}`}>{task.es ?? '-'}</div>
-                    <div className={`p-2 ${task.isCritical ? 'text-destructive font-bold' : ''}`}>{task.ef ?? '-'}</div>
-                </div>
-                
-                <div className="flex-grow p-3 py-4 text-center border-b flex flex-col items-center justify-center gap-2">
-                    <div className="text-xl font-bold text-primary">{task.name}</div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-muted-foreground">Durée:</span>
-                        <Input
-                            type="number"
-                            min="0"
-                            value={task.duration}
-                            onChange={(e) => handleUpdateTask(task.id, 'duration', parseInt(e.target.value) || 0)}
-                            className="bg-background border-input focus-visible:ring-1 text-center h-7 p-0 w-12 font-semibold"
-                        />
-                    </div>
-                    <div className="flex items-center gap-2 w-full mt-1">
-                        <span className="text-xs font-medium text-muted-foreground">Prédécesseurs:</span>
+          <div className="overflow-x-auto">
+            <table className="border-collapse">
+              <colgroup>
+                  <col className="w-[100px]" />
+                  {tasks.map(task => (
+                      <col key={task.id} className={cn("w-[140px]", highlightedTaskId === task.id ? 'bg-accent/20' : '')} />
+                  ))}
+              </colgroup>
+              <thead className="text-sm">
+                <tr className="border-b">
+                  <th className="p-2 text-left font-semibold text-muted-foreground border-b border-r">Tâche</th>
+                  {tasks.map(task => (
+                    <th key={task.id} className="p-2 text-center font-bold text-primary border-b border-r">{task.name}</th>
+                  ))}
+                </tr>
+                <tr className="border-b">
+                  <td className="p-2 text-left font-semibold text-muted-foreground border-b border-r">Durée</td>
+                  {tasks.map(task => (
+                    <td key={task.id} className="p-1 border-b border-r">
+                      <Input
+                        type="number"
+                        min="0"
+                        value={task.duration}
+                        onChange={(e) => handleUpdateTask(task.id, 'duration', parseInt(e.target.value) || 0)}
+                        className="w-20 mx-auto h-8 text-center"
+                      />
+                    </td>
+                  ))}
+                </tr>
+                <tr className="border-b-2">
+                   <td className="p-2 text-left font-semibold text-muted-foreground border-b border-r">T.ant.</td>
+                   {tasks.map(task => (
+                      <td key={task.id} className="p-1 border-b border-r">
                         <Input
                             value={task.predecessors}
                             onChange={(e) => handleUpdateTask(task.id, 'predecessors', e.target.value)}
                             placeholder="Ex: A, B"
-                            className="bg-background border-input focus-visible:ring-1 text-center h-7 px-1 w-full text-xs"
+                            className="w-20 mx-auto h-8 text-center"
                         />
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-2 text-center font-mono text-sm">
-                    <div className={`p-2 border-r ${task.isCritical ? 'text-destructive font-bold' : ''}`}>{task.ls ?? '-'}</div>
-                    <div className={`p-2 ${task.isCritical ? 'text-destructive font-bold' : ''}`}>{task.lf ?? '-'}</div>
-                </div>
-              </div>
-            ))}
+                      </td>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="p-2 text-left font-semibold text-muted-foreground border-r"></td>
+                  {tasks.map(task => (
+                    <td key={task.id} className="p-0 border-r align-top">
+                      <div className={cn("grid grid-cols-3 grid-rows-2 h-24 font-mono text-center", task.isCritical && 'bg-destructive/5')}>
+                        <div className={cn("border-r border-b p-1 flex items-center justify-center", task.isCritical && 'text-destructive font-bold')}>{task.es ?? ''}</div>
+                        <div className="border-r border-b p-1 flex items-center justify-center font-sans font-bold text-primary">{task.name}</div>
+                        <div className={cn("border-b p-1 flex items-center justify-center", task.isCritical && 'text-destructive font-bold')}>{task.ef ?? ''}</div>
+                        
+                        <div className={cn("border-r p-1 flex items-center justify-center", task.isCritical && 'text-destructive font-bold')}>{task.ls ?? ''}</div>
+                        <div className="border-r p-1 flex items-center justify-center font-sans text-xs text-muted-foreground">{task.predecessors}{task.duration}</div>
+                        <div className={cn("p-1 flex items-center justify-center", task.isCritical && 'text-destructive font-bold')}>{task.lf ?? ''}</div>
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+                 <tr>
+                    <td className="border-r"></td>
+                    {tasks.map(task => (
+                      <td key={task.id} className="p-1 text-center border-r">
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteTask(task.id)}>
+                                    <Trash2 className="h-4 w-4"/>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Supprimer la tâche</p>
+                            </TooltipContent>
+                        </Tooltip>
+                      </td>
+                    ))}
+                </tr>
+              </tbody>
+            </table>
           </div>
         </main>
         <Toaster />
@@ -337,3 +365,6 @@ export default function Home() {
     </TooltipProvider>
   );
 }
+
+
+    
