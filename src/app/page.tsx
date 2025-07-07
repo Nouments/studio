@@ -45,39 +45,59 @@ const INITIAL_TASKS: Task[] = [
     { id: 'F', name: 'F', duration: 0, predecessors: 'u,v,w', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
 ];
 
-const CalculationCell = ({ task }: { task: Task }) => {
+const CalculationCell = ({ task, allTasks }: { task: Task; allTasks: Task[] }) => {
+    // Get predecessor tasks with their most up-to-date data from allTasks
+    const predecessorTasks = task.predecessors
+        .split(',')
+        .map(p => p.trim())
+        .filter(Boolean)
+        .map(name => allTasks.find(t => t.name === name))
+        .filter((t): t is Task => !!t);
+
     const cellClasses = cn(
-        "bg-white w-48 shrink-0 border border-black",
-        task.isCritical && "text-destructive border-destructive"
+        "bg-white w-48 shrink-0 border border-black flex flex-col justify-between",
+        task.isCritical && "border-destructive"
     );
 
+    const textClasses = (isCrit: boolean) => cn(isCrit ? "text-destructive font-bold" : "font-normal");
+
     return (
-        <div className={cellClasses}>
-            {/* Top Row: ES, Name/Duration, EF */}
-            <div className={cn("grid grid-cols-[1fr_2fr_1fr] text-center border-b border-black", task.isCritical && "border-destructive")}>
-                <div className={cn("p-2 font-bold border-r border-black", task.isCritical && "border-destructive")}>{task.es ?? ''}</div>
-                <div className="p-2 font-bold">
-                    <span>{task.name}</span>
-                    <span className="ml-2">{task.duration}</span>
+        <div className={cellClasses} style={{ minHeight: '150px' }}>
+            {/* Top section: ES, task name, duration, EF */}
+            <div className={cn("p-2 text-center border-b border-black", task.isCritical && "border-destructive")}>
+                <div className="flex justify-between items-center">
+                    <span className={cn(textClasses(task.isCritical), "font-bold")}>{task.es ?? ''}</span>
+                    <span className={cn(textClasses(task.isCritical), "font-bold text-lg")}>{task.name.toUpperCase()}</span>
+                    <span className={cn(textClasses(task.isCritical), "font-bold")}>{task.duration}</span>
+                    <span className={cn(textClasses(task.isCritical), "font-bold")}>{task.ef ?? ''}</span>
                 </div>
-                <div className={cn("p-2 font-bold border-l border-black", task.isCritical && "border-destructive")}>{task.ef ?? ''}</div>
             </div>
 
-            {/* Bottom Row: LS, Float, LF */}
-            <div className={cn("grid grid-cols-[1fr_2fr_1fr] text-center")}>
-                <div className={cn("p-2 font-bold border-r border-black", task.isCritical && "border-destructive")}>{task.ls ?? ''}</div>
-                <div className="p-2 font-bold text-sm text-muted-foreground">
-                    {/* The float is the "marge" */}
-                    {task.float !== null ? `Marge = ${task.float}`: ''}
+            {/* Middle part: Predecessors list if they exist */}
+            <div className="p-2 flex-grow flex flex-col justify-center">
+                {predecessorTasks.map(p => (
+                    <div key={p.id} className={cn("flex justify-around text-sm", textClasses(p.isCritical))}>
+                        <span>{p.ef ?? ''}</span>
+                        <span>{p.name}</span>
+                        <span>{p.duration}</span>
+                    </div>
+                ))}
+            </div>
+            
+            {/* Bottom part: LS, Float, LF */}
+            <div className={cn("p-2 text-center border-t border-black", task.isCritical && "border-destructive")}>
+                 <div className="flex justify-between items-center">
+                    <span className={cn(textClasses(task.isCritical), "font-bold")}>{task.ls ?? ''}</span>
+                    <span className="text-sm text-muted-foreground">{task.float !== null ? `marge=${task.float}` : ''}</span>
+                    <span className={cn(textClasses(task.isCritical), "font-bold")}>{task.lf ?? ''}</span>
                 </div>
-                <div className={cn("p-2 font-bold border-l border-black", task.isCritical && "border-destructive")}>{task.lf ?? ''}</div>
             </div>
         </div>
     );
 };
 
 
-const CalculationView = ({ tasks }: { tasks: Task[] }) => {
+const CalculationView = ({ tasks, criticalPath }: { tasks: Task[], criticalPath: string | null }) => {
     if (tasks.length === 0) {
         return <div className="p-8 text-center text-muted-foreground">Aucune tâche à afficher.</div>
     }
@@ -86,10 +106,17 @@ const CalculationView = ({ tasks }: { tasks: Task[] }) => {
             <div className="overflow-x-auto pb-4">
                 <div className="flex flex-nowrap gap-px bg-black border border-black p-px">
                      {tasks.map(task => (
-                        <CalculationCell key={task.id} task={task} />
+                        <CalculationCell key={task.id} task={task} allTasks={tasks} />
                     ))}
                 </div>
             </div>
+             {criticalPath && (
+                <div className="mt-6 p-4 border-t-2 border-black text-center">
+                    <h2 className="text-xl font-bold">Chemin Critique:</h2>
+                    <p className="text-destructive font-bold text-lg tracking-wider mt-2">{criticalPath}</p>
+                    <p className="text-muted-foreground mt-4 text-sm">Remarque : Les successeurs sont calculés dès le départ pour la structure du graphe.</p>
+                </div>
+            )}
         </div>
     );
 }
@@ -100,6 +127,8 @@ export default function Home() {
     const [step, setStep] = useState(-1);
     const [calculationMode, setCalculationMode] = useState<'earliest' | 'latest'>('earliest');
     const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
+    const [criticalPath, setCriticalPath] = useState<string | null>(null);
+
 
     const taskMap = useMemo(() => {
         return tasks.reduce((acc, task) => {
@@ -127,12 +156,29 @@ export default function Home() {
                 }
             }
         }
-
-        const queue = tasks.filter(task => (inDegree.get(task.id) ?? 0) === 0);
-        const sorted: Task[] = [];
         
-        while (queue.length > 0) {
-            const currentTask = queue.shift()!;
+        const queue: Task[] = [];
+        // Find start nodes (those with no predecessors or whose only predecessor is the dummy 'D' task if it's the only one)
+        tasks.forEach(task => {
+            const predNames = task.predecessors.split(',').map(p => p.trim()).filter(Boolean);
+            if (predNames.length === 0) {
+                queue.push(task);
+            } else {
+                 inDegree.set(task.id, predNames.length);
+            }
+        });
+        
+        // Handle case where D is the start node
+        const startNode = tasks.find(t => t.name === 'D');
+        if(startNode && !queue.find(q => q.id === startNode.id)) {
+            // This case is complex, let's stick to the simpler in-degree logic
+        }
+
+        const sorted: Task[] = [];
+        const processingQueue = tasks.filter(task => (inDegree.get(task.id) ?? 0) === 0);
+        
+        while (processingQueue.length > 0) {
+            const currentTask = processingQueue.shift()!;
             sorted.push(tasks.find(t => t.id === currentTask.id)!);
 
             const successors = tasks.filter(t => t.predecessors.split(',').map(p => p.trim()).includes(currentTask.name));
@@ -140,7 +186,7 @@ export default function Home() {
                 const newInDegree = (inDegree.get(successor.id) ?? 1) - 1;
                 inDegree.set(successor.id, newInDegree);
                 if (newInDegree === 0) {
-                    queue.push(successor);
+                    processingQueue.push(successor);
                 }
             }
         }
@@ -159,6 +205,7 @@ export default function Home() {
             es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false
         })));
         setStep(-1);
+        setCriticalPath(null);
         toast({ title: "Calculs réinitialisés", description: "Toutes les données de planning ont été effacées." });
     }, [toast]);
 
@@ -173,16 +220,15 @@ export default function Home() {
     
     const handleEsStep = () => {
         if (step >= sortedTasks.length - 1) {
-            toast({ title: "Calcul terminé.", description: "Le chemin critique est maintenant affiché." });
-            // Final step: calculate critical path
-            const finalTask = tasks.find(t => t.name === 'F');
-            const projectFinishDate = finalTask?.ef ?? Math.max(...tasks.map(t => t.ef ?? 0));
+            toast({ title: "Calcul au plus tôt terminé.", description: "Calcul du chemin critique en cours..." });
             
-            // Set all LF to project finish date to start LS calculation
-            const tasksWithLf = tasks.map(t => ({...t, ls: null, lf: projectFinishDate, float: null, isCritical: false}));
+            const currentTasks = [...tasks];
+            const finalTask = currentTasks.find(t => t.name === 'F');
+            const projectFinishDate = finalTask?.ef ?? Math.max(...currentTasks.map(t => t.ef ?? 0));
+            
+            let newTasks = currentTasks.map(t => ({...t, ls: null, lf: projectFinishDate, float: null, isCritical: false}));
             
             const reversedSortedTasks = [...sortedTasks].reverse();
-            let newTasks = [...tasksWithLf];
 
             for(const currentTask of reversedSortedTasks) {
                 const taskInArr = newTasks.find(t => t.id === currentTask.id)!;
@@ -206,15 +252,24 @@ export default function Home() {
                const predNames = task.predecessors.split(',').map(p => p.trim()).filter(Boolean);
                for (const predName of predNames) {
                    const predTask = newTasks.find(t => t.name === predName);
-                   if (predTask && predTask.ef === task.es) {
+                   // To be on the path, the predecessor must also be critical and its end time must link to our start time
+                   if (predTask && Math.abs(predTask.float ?? 1) < 0.001 && predTask.ef === task.es) {
                        findPath(predName);
                    }
                }
            };
 
            findPath('F');
-           setTasks(newTasks.map(t => ({...t, isCritical: criticalPathTasks.has(t.name) })));
+           const finalTasksWithCritical = newTasks.map(t => ({...t, isCritical: criticalPathTasks.has(t.name) }));
+           
+           const criticalPathArray = sortedTasks
+                .filter(t => criticalPathTasks.has(t.name))
+                .map(t => t.name);
+           setCriticalPath(criticalPathArray.join(' - '));
+           
+           setTasks(finalTasksWithCritical);
            setStep(s => s + 1); // Mark as finished
+           toast({ title: "Calcul terminé !", description: "Le chemin critique est maintenant affiché." });
            return;
         }
 
@@ -222,7 +277,7 @@ export default function Home() {
         const currentTask = sortedTasks[newStep];
         
         const predNames = currentTask.predecessors.split(',').map(p => p.trim()).filter(Boolean);
-        const predTasks = predNames.map(name => taskMap[name]).filter(Boolean);
+        const predTasks = predNames.map(name => tasks.find(t=>t.name === name)).filter(Boolean);
         
         const es = predTasks.length > 0 ? Math.max(...predTasks.map(p => p.ef ?? 0)) : 0;
         const ef = es + currentTask.duration;
@@ -262,23 +317,25 @@ export default function Home() {
                                 <Label htmlFor="r1">Au plus tôt & Chemin Critique</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="latest" id="r2" />
+                                <RadioGroupItem value="latest" id="r2" disabled/>
                                 <Label htmlFor="r2">Au plus tard</Label>
                             </div>
                         </RadioGroup>
                          <div className="flex items-center gap-2">
                             <Button onClick={handleNextStep} disabled={isFinished || isCyclic} size="sm">
-                              <Play className="mr-2 h-4 w-4"/> {step === -1 ? "Démarrer" : "Étape suivante"}
+                              <Play className="mr-2 h-4 w-4"/> {step === -1 ? "Démarrer" : isFinished ? "Terminé" : "Étape suivante"}
                             </Button>
                             <Button onClick={handleReset} variant="destructive" size="sm"><RotateCcw className="mr-2 h-4 w-4" />Réinitialiser</Button>
                         </div>
                     </div>
                 </header>
 
-                <CalculationView tasks={sortedTasks} />
+                <CalculationView tasks={sortedTasks} criticalPath={criticalPath} />
 
                 <Toaster />
             </div>
         </TooltipProvider>
     );
 }
+
+    
