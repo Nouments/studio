@@ -26,16 +26,31 @@ import {
 import { cn } from "@/lib/utils";
 
 const INITIAL_TASKS: Task[] = [
-    { id: '1', name: 'A', duration: 5, predecessors: '', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '2', name: 'B', duration: 6, predecessors: 'A', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '3', name: 'C', duration: 4, predecessors: 'A', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '4', name: 'D', duration: 7, predecessors: 'B', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '5', name: 'E', duration: 3, predecessors: 'B, C', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '6', name: 'F', duration: 5, predecessors: 'D, E', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '7', name: 'G', duration: 6, predecessors: 'C', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '8', name: 'H', duration: 4, predecessors: 'F, G', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '9', name: 'I', duration: 2, predecessors: 'H', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '1', name: 'a', duration: 7, predecessors: '', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '2', name: 'b', duration: 7, predecessors: 'a', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '3', name: 'c', duration: 15, predecessors: 'b', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '4', name: 'd', duration: 30, predecessors: 'c', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '5', name: 'e', duration: 45, predecessors: 'd', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '6', name: 'f', duration: 15, predecessors: 'e', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '7', name: 'g', duration: 45, predecessors: 'd', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '8', name: 'h', duration: 60, predecessors: 'd', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '9', name: 'i', duration: 20, predecessors: 'h', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '10', name: 'j', duration: 30, predecessors: 'i', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '11', name: 'k', duration: 30, predecessors: 'f', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '12', name: 'l', duration: 15, predecessors: 'k', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '13', name: 'm', duration: 30, predecessors: 'g, j, l', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '14', name: 'n', duration: 15, predecessors: 'm', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '15', name: 'o', duration: 30, predecessors: 'n', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '16', name: 'p', duration: 15, predecessors: 'm', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '17', name: 'q', duration: 15, predecessors: 'o', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '18', name: 'r', duration: 15, predecessors: 'q', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '19', name: 's', duration: 30, predecessors: 'q', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '20', name: 't', duration: 7, predecessors: 'p', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '21', name: 'u', duration: 4, predecessors: 'r, t', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '22', name: 'v', duration: 2, predecessors: 's, t', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '23', name: 'w', duration: 7, predecessors: 'r, s', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
 ];
+
 
 export default function Home() {
   const { toast } = useToast();
@@ -132,7 +147,7 @@ export default function Home() {
         let temp = i;
         let name = '';
         while (temp >= 0) {
-            name = String.fromCharCode(temp % 26 + 65) + name;
+            name = String.fromCharCode(temp % 26 + 97) + name;
             temp = Math.floor(temp / 26) - 1;
         }
         if (!existingNames.has(name)) {
@@ -317,7 +332,7 @@ export default function Home() {
                         <Input
                             value={task.predecessors}
                             onChange={(e) => handleUpdateTask(task.id, 'predecessors', e.target.value)}
-                            placeholder="Ex: A, B"
+                            placeholder="Ex: a, b"
                             className="w-20 mx-auto h-8 text-center"
                         />
                       </td>
@@ -367,7 +382,3 @@ export default function Home() {
     </TooltipProvider>
   );
 }
-
-
-    
-    
