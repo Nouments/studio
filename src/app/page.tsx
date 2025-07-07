@@ -265,7 +265,7 @@ export default function Home() {
             <Button onClick={handleAddTask} variant="outline" size="sm"><PlusCircle className="mr-2" />Ajouter Tâche</Button>
             <Button onClick={handleOptimize} disabled={isOptimizing || isCyclic} variant="outline" size="sm">
               {isOptimizing ? <Loader className="mr-2 animate-spin" /> : <BrainCircuit className="mr-2" />}
-              Optimiseur de Planning (IA)
+              Optimiseur (IA)
             </Button>
             <Button onClick={handleEsStep} disabled={allEsDone || isCyclic} size="sm">
               <Play className="mr-2"/> Au plus tôt ({esStep + 1}/{tasks.length})
@@ -279,16 +279,16 @@ export default function Home() {
         <main className="flex-grow overflow-auto p-4">
           <div className="flex flex-row flex-wrap gap-4">
             {tasks.map((task) => (
-              <div 
+              <div
                 key={task.id}
-                data-critical={task.isCritical} 
+                data-critical={task.isCritical}
                 data-highlight={highlightedTaskId === task.id}
-                className="relative border rounded-lg shadow-sm w-48 flex flex-col transition-colors duration-500 data-[critical=true]:bg-primary/10 data-[highlight=true]:bg-accent/20"
+                className="relative border rounded-lg shadow-sm w-56 flex flex-col transition-all duration-300 data-[critical=true]:border-destructive data-[critical=true]:shadow-lg data-[critical=true]:shadow-destructive/20 data-[highlight=true]:bg-accent/20 data-[highlight=true]:scale-105"
               >
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-6 w-6 text-muted-foreground hover:text-destructive z-10" onClick={() => handleDeleteTask(task.id)}>
-                            <Trash2 className="h-3 w-3"/>
+                        <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 text-muted-foreground hover:text-destructive z-10" onClick={() => handleDeleteTask(task.id)}>
+                            <Trash2 className="h-4 w-4"/>
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -296,29 +296,37 @@ export default function Home() {
                     </TooltipContent>
                 </Tooltip>
 
-                <div className="grid grid-cols-[1fr,auto,1fr] text-center border-b font-mono">
-                  <span className={`p-2 ${task.isCritical ? 'text-destructive font-bold' : ''}`}>{task.es}</span>
-                  <div className="p-2 font-bold text-base text-foreground border-x flex items-center justify-center">{task.name}</div>
-                  <span className={`p-2 ${task.isCritical ? 'text-destructive font-bold' : ''}`}>{task.ef}</span>
+                <div className="grid grid-cols-2 text-center border-b font-mono text-sm">
+                    <div className={`p-2 border-r ${task.isCritical ? 'text-destructive font-bold' : ''}`}>{task.es ?? '-'}</div>
+                    <div className={`p-2 ${task.isCritical ? 'text-destructive font-bold' : ''}`}>{task.ef ?? '-'}</div>
+                </div>
+                
+                <div className="flex-grow p-3 py-4 text-center border-b flex flex-col items-center justify-center gap-2">
+                    <div className="text-xl font-bold text-primary">{task.name}</div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-muted-foreground">Durée:</span>
+                        <Input
+                            type="number"
+                            min="0"
+                            value={task.duration}
+                            onChange={(e) => handleUpdateTask(task.id, 'duration', parseInt(e.target.value) || 0)}
+                            className="bg-background border-input focus-visible:ring-1 text-center h-7 p-0 w-12 font-semibold"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2 w-full mt-1">
+                        <span className="text-xs font-medium text-muted-foreground">Prédécesseurs:</span>
+                        <Input
+                            value={task.predecessors}
+                            onChange={(e) => handleUpdateTask(task.id, 'predecessors', e.target.value)}
+                            placeholder="Ex: A, B"
+                            className="bg-background border-input focus-visible:ring-1 text-center h-7 px-1 w-full text-xs"
+                        />
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-[1fr,auto,1fr] text-center items-center font-mono">
-                  <span className="p-2">{task.ls}</span>
-                  <div className="border-x h-full flex flex-col justify-center items-center p-1 text-xs">
-                    <Input
-                      value={task.predecessors}
-                      onChange={(e) => handleUpdateTask(task.id, 'predecessors', e.target.value)}
-                      placeholder="Preds."
-                      className="bg-transparent border-0 focus-visible:ring-0 text-center h-6 p-0 w-full"
-                    />
-                    <Input
-                      type="number"
-                      value={task.duration}
-                      onChange={(e) => handleUpdateTask(task.id, 'duration', parseInt(e.target.value) || 0)}
-                      className="bg-transparent border-0 focus-visible:ring-0 text-center h-6 p-0 w-16 font-bold"
-                    />
-                  </div>
-                  <span className="p-2">{task.lf}</span>
+                <div className="grid grid-cols-2 text-center font-mono text-sm">
+                    <div className={`p-2 border-r ${task.isCritical ? 'text-destructive font-bold' : ''}`}>{task.ls ?? '-'}</div>
+                    <div className={`p-2 ${task.isCritical ? 'text-destructive font-bold' : ''}`}>{task.lf ?? '-'}</div>
                 </div>
               </div>
             ))}
