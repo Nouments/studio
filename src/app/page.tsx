@@ -290,12 +290,12 @@ export default function Home() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[60px]">Suppr.</TableHead>
-                  <TableHead className="w-[150px]">Tâche</TableHead>
+                  <TableHead className="w-[150px] text-center">Tâche</TableHead>
                   <TableHead className="w-[100px]">Durée (j)</TableHead>
                   <TableHead>Prédécesseurs</TableHead>
                   <TableHead>Successeurs</TableHead>
-                  <TableHead className="w-[180px] text-center">Début (Tôt / Tard)</TableHead>
-                  <TableHead className="w-[180px] text-center">Fin (Tôt / Tard)</TableHead>
+                  <TableHead className="w-[120px] text-center">Début (Tôt / Tard)</TableHead>
+                  <TableHead className="w-[120px] text-center">Fin (Tôt / Tard)</TableHead>
                   <TableHead className="w-[80px] text-center">Marge</TableHead>
                 </TableRow>
               </TableHeader>
@@ -311,13 +311,8 @@ export default function Home() {
                             <Trash2 className="h-4 w-4"/>
                         </Button>
                     </TableCell>
-                    <TableCell>
-                      <Input
-                        value={task.name}
-                        onChange={(e) => handleUpdateTask(task.id, 'name', e.target.value)}
-                        className="bg-transparent border-0 focus-visible:ring-1 font-bold"
-                        readOnly
-                      />
+                    <TableCell className="font-bold text-center align-middle">
+                      {task.name}
                     </TableCell>
                     <TableCell>
                       <Input
@@ -336,16 +331,16 @@ export default function Home() {
                       />
                     </TableCell>
                     <TableCell className="text-muted-foreground">{task.successors.join(', ')}</TableCell>
-                    <TableCell>
-                      <div className="flex divide-x divide-border border rounded-md">
-                        <span className="w-1/2 text-center font-mono p-2">{task.es}</span>
-                        <span className="w-1/2 text-center font-mono p-2">{task.ls}</span>
+                    <TableCell className="p-2">
+                      <div className="flex flex-col divide-y divide-border border rounded-md">
+                        <span className="text-center font-mono px-2 py-1">{task.es}</span>
+                        <span className="text-center font-mono px-2 py-1">{task.ls}</span>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex divide-x divide-border border rounded-md">
-                        <span className="w-1/2 text-center font-mono p-2">{task.ef}</span>
-                        <span className="w-1/2 text-center font-mono p-2">{task.lf}</span>
+                    <TableCell className="p-2">
+                      <div className="flex flex-col divide-y divide-border border rounded-md">
+                        <span className="text-center font-mono px-2 py-1">{task.ef}</span>
+                        <span className="text-center font-mono px-2 py-1">{task.lf}</span>
                       </div>
                     </TableCell>
                     <TableCell className="font-mono text-center">{task.float}</TableCell>
