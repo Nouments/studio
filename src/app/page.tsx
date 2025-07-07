@@ -26,31 +26,132 @@ import {
 import { cn } from "@/lib/utils";
 
 const INITIAL_TASKS: Task[] = [
-    { id: '1', name: 'a', duration: 7, predecessors: '', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '2', name: 'b', duration: 7, predecessors: 'a', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '3', name: 'c', duration: 15, predecessors: 'b', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '4', name: 'd', duration: 30, predecessors: 'c', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '5', name: 'e', duration: 45, predecessors: 'd', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '6', name: 'f', duration: 15, predecessors: 'e', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '7', name: 'g', duration: 45, predecessors: 'd', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '8', name: 'h', duration: 60, predecessors: 'd', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '9', name: 'i', duration: 20, predecessors: 'h', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '10', name: 'j', duration: 30, predecessors: 'i', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '11', name: 'k', duration: 30, predecessors: 'f', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '12', name: 'l', duration: 15, predecessors: 'k', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '13', name: 'm', duration: 30, predecessors: 'g, j, l', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '14', name: 'n', duration: 15, predecessors: 'm', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '15', name: 'o', duration: 30, predecessors: 'n', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '16', name: 'p', duration: 15, predecessors: 'm', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '17', name: 'q', duration: 15, predecessors: 'o', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '18', name: 'r', duration: 15, predecessors: 'q', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '19', name: 's', duration: 30, predecessors: 'q', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '20', name: 't', duration: 7, predecessors: 'p', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '21', name: 'u', duration: 4, predecessors: 'r, t', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '22', name: 'v', duration: 2, predecessors: 's, t', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '23', name: 'w', duration: 7, predecessors: 'r, s', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'a', name: 'a', duration: 7, predecessors: '', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'b', name: 'b', duration: 7, predecessors: 'a', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'c', name: 'c', duration: 15, predecessors: 'b', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'd', name: 'd', duration: 30, predecessors: 'c', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'e', name: 'e', duration: 45, predecessors: 'd', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'f', name: 'f', duration: 15, predecessors: 'e', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'g', name: 'g', duration: 45, predecessors: 'd', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'h', name: 'h', duration: 60, predecessors: 'd', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'i', name: 'i', duration: 20, predecessors: 'h', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'j', name: 'j', duration: 30, predecessors: 'i', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'k', name: 'k', duration: 30, predecessors: 'f', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'l', name: 'l', duration: 15, predecessors: 'k', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'm', name: 'm', duration: 30, predecessors: 'g,j,l', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'n', name: 'n', duration: 15, predecessors: 'm', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'o', name: 'o', duration: 30, predecessors: 'n', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'p', name: 'p', duration: 15, predecessors: 'm', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'q', name: 'q', duration: 15, predecessors: 'o', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'r', name: 'r', duration: 15, predecessors: 'q', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 's', name: 's', duration: 30, predecessors: 'q', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 't', name: 't', duration: 7, predecessors: 'p,r', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'u', name: 'u', duration: 4, predecessors: 'r,t', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'v', name: 'v', duration: 2, predecessors: 's,t', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: 'w', name: 'w', duration: 7, predecessors: 'r,s', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
 ];
 
+const TaskCard = ({ task, allTasks, highlighted }: { task: Task, allTasks: Task[], highlighted: boolean }) => {
+    const taskNameMap = useMemo(() => {
+        return allTasks.reduce((acc, task) => {
+            acc[task.name] = task;
+            return acc;
+        }, {} as Record<string, Task>);
+    }, [allTasks]);
+    
+    const predecessors = useMemo(() => {
+        return task.predecessors.split(',').map(p => p.trim()).filter(Boolean).map(name => taskNameMap[name]).filter(Boolean);
+    }, [task.predecessors, taskNameMap]);
+
+    return (
+        <div className={cn("border-2 border-black transition-all", highlighted ? "shadow-2xl scale-105" : "shadow-md", task.isCritical && "border-destructive")}>
+            <div className={cn("grid grid-cols-[auto_1fr_auto] items-center text-center", task.isCritical && "text-destructive font-bold")}>
+                <div className="px-4 py-2 border-r-2 border-black">{task.es}</div>
+                <div className="px-4 py-2 font-bold text-xl">{task.name}</div>
+                <div className="px-4 py-2 border-l-2 border-black">{task.ef}</div>
+            </div>
+            <div className="border-t-2 border-black p-2 min-h-[6rem] bg-slate-50">
+                {predecessors.length > 0 ? (
+                    predecessors.map(p => (
+                         <div key={p.id} className={cn("grid grid-cols-[auto_1fr_auto] items-center text-center text-sm", p.isCritical && "text-destructive font-semibold")}>
+                            <div className="px-2 py-1">{p.es}</div>
+                            <div className="px-2 py-1">{p.name} {p.duration}</div>
+                            <div className="px-2 py-1">{p.ef}</div>
+                        </div>
+                    ))
+                ) : (
+                    <div className="text-center text-sm text-muted-foreground h-full flex items-center justify-center">Début</div>
+                )}
+            </div>
+             <div className={cn("grid grid-cols-[auto_1fr_auto] items-center text-center border-t-2 border-black", task.isCritical && "text-destructive font-bold")}>
+                <div className="px-4 py-2 border-r-2 border-black">{task.ls ?? ''}</div>
+                <div className="px-4 py-2 text-sm">{task.float !== null ? `marge=${task.float}`: ''}</div>
+                <div className="px-4 py-2 border-l-2 border-black">{task.lf ?? ''}</div>
+            </div>
+        </div>
+    );
+};
+
+const DataEntryView = ({ tasks, handleUpdateTask, handleDeleteTask }: { tasks: Task[], handleUpdateTask: (id: string, field: keyof Task, value: any) => void, handleDeleteTask: (id: string) => void }) => {
+    return (
+        <div className="overflow-x-auto">
+            <table className="border-collapse">
+                <thead className="text-sm">
+                    <tr className="border-b">
+                        <th className="p-2 text-left font-semibold text-muted-foreground border-b border-r sticky left-0 bg-background z-10">Tâche</th>
+                        {tasks.map(task => (
+                            <th key={task.id} className="p-2 text-center font-bold text-primary border-b border-r">{task.name}</th>
+                        ))}
+                    </tr>
+                    <tr className="border-b">
+                        <td className="p-2 text-left font-semibold text-muted-foreground border-b border-r sticky left-0 bg-background z-10">Durée</td>
+                        {tasks.map(task => (
+                            <td key={task.id} className="p-1 border-b border-r">
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    value={task.duration}
+                                    onChange={(e) => handleUpdateTask(task.id, 'duration', parseInt(e.target.value) || 0)}
+                                    className="w-20 mx-auto h-8 text-center"
+                                />
+                            </td>
+                        ))}
+                    </tr>
+                    <tr className="border-b-2">
+                        <td className="p-2 text-left font-semibold text-muted-foreground border-b border-r sticky left-0 bg-background z-10">Prédécesseurs</td>
+                        {tasks.map(task => (
+                            <td key={task.id} className="p-1 border-b border-r">
+                                <Input
+                                    value={task.predecessors}
+                                    onChange={(e) => handleUpdateTask(task.id, 'predecessors', e.target.value)}
+                                    placeholder="Ex: a,b"
+                                    className="w-20 mx-auto h-8 text-center"
+                                />
+                            </td>
+                        ))}
+                    </tr>
+                     <tr className="border-b-2">
+                        <td className="p-2 text-left font-semibold text-muted-foreground border-b border-r sticky left-0 bg-background z-10">Actions</td>
+                        {tasks.map(task => (
+                            <td key={task.id} className="p-1 text-center border-r">
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteTask(task.id)}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Supprimer la tâche</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </td>
+                        ))}
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    );
+}
 
 export default function Home() {
   const { toast } = useToast();
@@ -59,6 +160,7 @@ export default function Home() {
   const [lsStep, setLsStep] = useState(-1);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
+  const [view, setView] = useState<'data' | 'calculation'>('data');
 
   const taskNameMap = useMemo(() => {
     return tasks.reduce((acc, task) => {
@@ -119,6 +221,45 @@ export default function Home() {
     setHighlightedTaskId(taskId);
     setTimeout(() => setHighlightedTaskId(null), 500);
   };
+
+  const calculateAndSetCriticalPath = useCallback(() => {
+      const taskMap = tasks.reduce((acc, task) => {
+          acc[task.name] = task;
+          return acc;
+      }, {} as Record<string, Task>);
+
+      const endTasks = tasks.filter(t => t.successors.length === 0);
+      if (endTasks.length === 0 && tasks.length > 0) {
+         const maxEf = Math.max(...tasks.map(t => t.ef ?? 0));
+         endTasks.push(...tasks.filter(t => t.ef === maxEf));
+      }
+
+      let criticalPathTasks = new Set<string>();
+      
+      const findPath = (taskName: string) => {
+          if (criticalPathTasks.has(taskName)) return;
+
+          const task = taskMap[taskName];
+          if(!task) return;
+
+          criticalPathTasks.add(taskName);
+
+          if (task.predecessors.length === 0) return;
+
+          const predNames = task.predecessors.split(',').map(p => p.trim()).filter(Boolean);
+          for (const predName of predNames) {
+              const predTask = taskMap[predName];
+              if (predTask && predTask.ef === task.es) {
+                  findPath(predName);
+              }
+          }
+      };
+      
+      endTasks.forEach(t => findPath(t.name));
+
+      setTasks(prev => prev.map(t => ({...t, isCritical: criticalPathTasks.has(t.name) })));
+      toast({ title: "Chemin critique calculé", description: "Le chemin critique a été mis en évidence en rouge." });
+  }, [tasks, toast]);
   
   const handleReset = useCallback(() => {
     setTasks(prevTasks => prevTasks.map(t => ({
@@ -127,6 +268,7 @@ export default function Home() {
     })));
     setEsStep(-1);
     setLsStep(-1);
+    setView('data');
     toast({ title: "Calculs réinitialisés", description: "Toutes les données de planning ont été effacées." });
   }, [toast]);
 
@@ -135,29 +277,24 @@ export default function Home() {
       task.id === id ? { ...task, [field]: value } : task
     );
     setTasks(newTasks);
-    handleReset();
   };
 
   const handleAddTask = () => {
-    const newId = (tasks.length > 0 ? Math.max(...tasks.map(t => parseInt(t.id, 10))) : 0) + 1).toString();
+    const newId = (tasks.length > 0 ? Math.max(...tasks.map(t => parseInt(t.id.replace(/[^0-9]/g, ''), 10) || 0)) : 0) + 1).toString();
 
     const existingNames = new Set(tasks.map(t => t.name));
     let newName = '';
+    // Find the next available letter of the alphabet
     for (let i = 0; ; i++) {
-        let temp = i;
-        let name = '';
-        while (temp >= 0) {
-            name = String.fromCharCode(temp % 26 + 97) + name;
-            temp = Math.floor(temp / 26) - 1;
-        }
-        if (!existingNames.has(name)) {
-            newName = name;
+        let tempName = String.fromCharCode(97 + i); // 97 is 'a'
+        if (!existingNames.has(tempName)) {
+            newName = tempName;
             break;
         }
     }
 
     const newTask: Task = {
-      id: newId,
+      id: newName,
       name: newName,
       duration: 1,
       predecessors: '',
@@ -165,7 +302,6 @@ export default function Home() {
       es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false
     };
     setTasks([...tasks, newTask]);
-    handleReset();
   };
   
   const handleDeleteTask = (id: string) => {
@@ -184,8 +320,11 @@ export default function Home() {
   }
 
   const handleEsStep = () => {
+    if (view === 'data') setView('calculation');
+
     if (esStep >= sortedTasks.length - 1) {
-      toast({ title: "Calcul des dates au plus tôt terminé", description: "Toutes les tâches ont été traitées." });
+      toast({ title: "Calcul des dates au plus tôt terminé.", description: "Vous pouvez maintenant calculer les dates au plus tard." });
+      calculateAndSetCriticalPath();
       return;
     }
 
@@ -210,7 +349,7 @@ export default function Home() {
       return;
     }
     if (lsStep >= sortedTasks.length - 1) {
-      toast({ title: "Calcul des dates au plus tard terminé", description: "Toutes les tâches ont été traitées. La marge et le chemin critique sont à jour." });
+      toast({ title: "Calcul des dates au plus tard terminé", description: "Toutes les tâches ont été traitées. La marge est à jour." });
       return;
     }
 
@@ -225,9 +364,8 @@ export default function Home() {
     const ls = lf - currentTask.duration;
     
     const float = ls - (currentTask.es ?? 0);
-    const isCritical = float === 0;
 
-    setTasks(prev => prev.map(t => t.id === currentTask.id ? { ...t, ls, lf, float, isCritical, isCompleted: true } : t));
+    setTasks(prev => prev.map(t => t.id === currentTask.id ? { ...t, ls, lf, float } : t));
     setLsStep(newLsStep);
     triggerHighlight(currentTask.id);
   };
@@ -241,7 +379,7 @@ export default function Home() {
       });
 
       const newTasks = response.optimizedTasks.map((t, i) => ({
-        id: (i + 1).toString(),
+        id: t.name,
         name: t.name,
         duration: t.duration,
         predecessors: t.predecessors.join(', '),
@@ -264,121 +402,57 @@ export default function Home() {
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col h-screen bg-background text-foreground font-body antialiased">
-        <header className="flex items-center justify-between p-4 border-b shrink-0">
-          <h1 className="text-2xl font-bold text-primary font-headline">Planificateur de Tâches Pro</h1>
+      <div className="flex flex-col h-screen bg-background text-foreground font-sans antialiased">
+        <header className="flex items-center justify-between p-4 border-b shrink-0 bg-slate-100">
+            <div className="flex items-center gap-4">
+                <div className="bg-green-600 text-white p-2 text-center font-bold">RECHERCHE<br/>OPERATIONNELLE</div>
+                <h1 className="text-3xl font-bold text-red-700">Chemin critique</h1>
+            </div>
           <div className="flex items-center gap-2">
             {isCyclic && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center gap-2 text-destructive-foreground bg-destructive p-2 rounded-md">
                     <AlertCircle className="h-5 w-5" />
-                    <span className="font-semibold">Dépendance Cyclique Détectée!</span>
+                    <span className="font-semibold">Dépendance Cyclique!</span>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Les calculs sont désactivés. Veuillez résoudre la boucle dans vos tâches.</p>
+                  <p>Les calculs sont désactivés. Veuillez résoudre la boucle.</p>
                 </TooltipContent>
               </Tooltip>
             )}
-            <Button onClick={handleAddTask} variant="outline" size="sm"><PlusCircle className="mr-2" />Ajouter Tâche</Button>
-            <Button onClick={handleOptimize} disabled={isOptimizing || isCyclic} variant="outline" size="sm">
-              {isOptimizing ? <Loader className="mr-2 animate-spin" /> : <BrainCircuit className="mr-2" />}
+            <Button onClick={handleAddTask} variant="outline" size="sm" disabled={view === 'calculation'}><PlusCircle className="mr-2 h-4 w-4" />Ajouter Tâche</Button>
+            <Button onClick={handleOptimize} disabled={isOptimizing || isCyclic || view === 'calculation'} variant="outline" size="sm">
+              {isOptimizing ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
               Optimiseur (IA)
             </Button>
-            <Button onClick={handleEsStep} disabled={allEsDone || isCyclic} size="sm">
-              <Play className="mr-2"/> Calculer au plus tôt
+            <Button onClick={handleEsStep} disabled={(allEsDone && view === 'calculation') || isCyclic} size="sm">
+              <Play className="mr-2 h-4 w-4"/> Calculer au plus tôt
             </Button>
             <Button onClick={handleLsStep} disabled={!allEsDone || allLsDone || isCyclic} size="sm">
-              <Play className="mr-2"/> Calculer au plus tard
+              <Play className="mr-2 h-4 w-4"/> Calculer au plus tard
             </Button>
-            <Button onClick={handleReset} variant="destructive" size="sm"><RotateCcw className="mr-2" />Réinitialiser</Button>
+            <Button onClick={handleReset} variant="destructive" size="sm"><RotateCcw className="mr-2 h-4 w-4" />Réinitialiser</Button>
           </div>
         </header>
-        <main className="flex-grow overflow-auto p-4">
-          <div className="overflow-x-auto">
-            <table className="border-collapse">
-              <colgroup>
-                  <col className="w-[100px]" />
-                  {tasks.map(task => (
-                      <col key={task.id} className={cn("w-[140px]", highlightedTaskId === task.id ? 'bg-accent/20' : '')} />
-                  ))}
-              </colgroup>
-              <thead className="text-sm">
-                <tr className="border-b">
-                  <th className="p-2 text-left font-semibold text-muted-foreground border-b border-r">Tâche</th>
-                  {tasks.map(task => (
-                    <th key={task.id} className="p-2 text-center font-bold text-primary border-b border-r">{task.name}</th>
-                  ))}
-                </tr>
-                <tr className="border-b">
-                  <td className="p-2 text-left font-semibold text-muted-foreground border-b border-r">Durée</td>
-                  {tasks.map(task => (
-                    <td key={task.id} className="p-1 border-b border-r">
-                      <Input
-                        type="number"
-                        min="0"
-                        value={task.duration}
-                        onChange={(e) => handleUpdateTask(task.id, 'duration', parseInt(e.target.value) || 0)}
-                        className="w-20 mx-auto h-8 text-center"
-                      />
-                    </td>
-                  ))}
-                </tr>
-                <tr className="border-b-2">
-                   <td className="p-2 text-left font-semibold text-muted-foreground border-b border-r">T.ant.</td>
-                   {tasks.map(task => (
-                      <td key={task.id} className="p-1 border-b border-r">
-                        <Input
-                            value={task.predecessors}
-                            onChange={(e) => handleUpdateTask(task.id, 'predecessors', e.target.value)}
-                            placeholder="Ex: a, b"
-                            className="w-20 mx-auto h-8 text-center"
-                        />
-                      </td>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="p-2 text-left font-semibold text-muted-foreground border-r"></td>
-                  {tasks.map(task => (
-                    <td key={task.id} className="p-0 border-r align-top">
-                      <div className={cn("grid grid-cols-3 grid-rows-2 h-24 font-mono text-center", task.isCritical && 'bg-destructive/5')}>
-                        <div className={cn("border-r border-b p-1 flex items-center justify-center", task.isCritical && 'text-destructive font-bold')}>{task.es ?? ''}</div>
-                        <div className="border-r border-b p-1 flex items-center justify-center font-sans font-bold text-primary">{task.name}</div>
-                        <div className={cn("border-b p-1 flex items-center justify-center", task.isCritical && 'text-destructive font-bold')}>{task.ef ?? ''}</div>
-                        
-                        <div className={cn("border-r p-1 flex items-center justify-center", task.isCritical && 'text-destructive font-bold')}>{task.ls ?? ''}</div>
-                        <div className="border-r p-1 flex items-center justify-center font-sans text-xs text-muted-foreground">{task.predecessors}{task.duration}</div>
-                        <div className={cn("p-1 flex items-center justify-center", task.isCritical && 'text-destructive font-bold')}>{task.lf ?? ''}</div>
-                      </div>
-                    </td>
-                  ))}
-                </tr>
-                 <tr>
-                    <td className="border-r"></td>
+
+        <main className="flex-grow overflow-auto p-8 bg-slate-200">
+           {view === 'data' ? (
+              <DataEntryView tasks={tasks} handleUpdateTask={handleUpdateTask} handleDeleteTask={handleDeleteTask}/>
+            ) : (
+                <div className="flex flex-wrap gap-1">
                     {tasks.map(task => (
-                      <td key={task.id} className="p-1 text-center border-r">
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteTask(task.id)}>
-                                    <Trash2 className="h-4 w-4"/>
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Supprimer la tâche</p>
-                            </TooltipContent>
-                        </Tooltip>
-                      </td>
+                        <TaskCard key={task.id} task={task} allTasks={tasks} highlighted={highlightedTaskId === task.id}/>
                     ))}
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                </div>
+            )}
         </main>
+
         <Toaster />
       </div>
     </TooltipProvider>
   );
 }
+
+    
