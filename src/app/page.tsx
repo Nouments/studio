@@ -26,13 +26,15 @@ import {
 import { cn } from "@/lib/utils";
 
 const INITIAL_TASKS: Task[] = [
-    { id: '1', name: 'A', duration: 7, predecessors: '', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '2', name: 'B', duration: 7, predecessors: 'A', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '3', name: 'C', duration: 15, predecessors: 'B', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '4', name: 'D', duration: 30, predecessors: 'C', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '5', name: 'E', duration: 45, predecessors: 'D', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '6', name: 'F', duration: 15, predecessors: 'E', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
-    { id: '7', name: 'G', duration: 45, predecessors: 'D', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '1', name: 'A', duration: 5, predecessors: '', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '2', name: 'B', duration: 6, predecessors: 'A', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '3', name: 'C', duration: 4, predecessors: 'A', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '4', name: 'D', duration: 7, predecessors: 'B', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '5', name: 'E', duration: 3, predecessors: 'B, C', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '6', name: 'F', duration: 5, predecessors: 'D, E', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '7', name: 'G', duration: 6, predecessors: 'C', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '8', name: 'H', duration: 4, predecessors: 'F, G', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
+    { id: '9', name: 'I', duration: 2, predecessors: 'H', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
 ];
 
 export default function Home() {
@@ -367,4 +369,5 @@ export default function Home() {
 }
 
 
+    
     
