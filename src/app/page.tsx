@@ -51,104 +51,103 @@ const INITIAL_TASKS: Task[] = [
     { id: 'w', name: 'w', duration: 7, predecessors: 'r,s', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
 ];
 
-const TaskCard = ({ task, allTasks, highlighted }: { task: Task, allTasks: Task[], highlighted: boolean }) => {
-    const taskNameMap = useMemo(() => {
-        return allTasks.reduce((acc, task) => {
-            acc[task.name] = task;
-            return acc;
-        }, {} as Record<string, Task>);
-    }, [allTasks]);
-    
-    const predecessors = useMemo(() => {
-        return task.predecessors.split(',').map(p => p.trim()).filter(Boolean).map(name => taskNameMap[name]).filter(Boolean);
-    }, [task.predecessors, taskNameMap]);
-
+const TaskCard = ({ task, highlighted }: { task: Task, highlighted: boolean }) => {
     return (
-        <div className={cn("border-2 border-black transition-all", highlighted ? "shadow-2xl scale-105" : "shadow-md", task.isCritical && "border-destructive")}>
-            <div className={cn("grid grid-cols-[auto_1fr_auto] items-center text-center", task.isCritical && "text-destructive font-bold")}>
-                <div className="px-4 py-2 border-r-2 border-black">{task.es}</div>
-                <div className="px-4 py-2 font-bold text-xl">{task.name}</div>
-                <div className="px-4 py-2 border-l-2 border-black">{task.ef}</div>
+        <div className={cn(
+            "w-64 shrink-0 bg-white rounded-lg border-2 border-black font-sans shadow-lg",
+            highlighted && "shadow-2xl scale-105 transition-transform duration-300 z-10",
+            task.isCritical && "border-destructive"
+        )}>
+            <div className={cn(
+                "grid grid-cols-2 text-center text-lg font-bold",
+                task.isCritical && "text-destructive"
+            )}>
+                <div className="p-3 border-b-2 border-r-2 border-black">{task.es ?? ''}</div>
+                <div className="p-3 border-b-2 border-black">{task.ef ?? ''}</div>
             </div>
-            <div className="border-t-2 border-black p-2 min-h-[6rem] bg-slate-50">
-                {predecessors.length > 0 ? (
-                    predecessors.map(p => (
-                         <div key={p.id} className={cn("grid grid-cols-[auto_1fr_auto] items-center text-center text-sm", p.isCritical && "text-destructive font-semibold")}>
-                            <div className="px-2 py-1">{p.es}</div>
-                            <div className="px-2 py-1">{p.name} {p.duration}</div>
-                            <div className="px-2 py-1">{p.ef}</div>
-                        </div>
-                    ))
-                ) : (
-                    <div className="text-center text-sm text-muted-foreground h-full flex items-center justify-center">Début</div>
-                )}
+            <div className="text-center p-3 border-b-2 border-black min-h-[7rem] flex flex-col justify-center">
+                <div className="text-2xl font-bold">{task.name}</div>
+                <div className="text-muted-foreground">Durée: {task.duration}</div>
+                 <div className="text-sm text-muted-foreground mt-1 truncate">
+                    Préc: {task.predecessors || 'Aucun'}
+                </div>
             </div>
-             <div className={cn("grid grid-cols-[auto_1fr_auto] items-center text-center border-t-2 border-black", task.isCritical && "text-destructive font-bold")}>
-                <div className="px-4 py-2 border-r-2 border-black">{task.ls ?? ''}</div>
-                <div className="px-4 py-2 text-sm">{task.float !== null ? `marge=${task.float}`: ''}</div>
-                <div className="px-4 py-2 border-l-2 border-black">{task.lf ?? ''}</div>
+            <div className={cn(
+                "grid grid-cols-2 text-center text-lg font-bold",
+                task.isCritical && "text-destructive"
+            )}>
+                <div className="p-3 border-r-2 border-black">{task.ls ?? ''}</div>
+                <div className="p-3">{task.lf ?? ''}</div>
+            </div>
+            <div className={cn(
+                "text-center p-2 border-t-2 border-black text-base",
+                 task.isCritical && "text-destructive font-bold"
+            )}>
+                Marge = {task.float ?? ''}
             </div>
         </div>
     );
 };
 
-const DataEntryView = ({ tasks, handleUpdateTask, handleDeleteTask }: { tasks: Task[], handleUpdateTask: (id: string, field: keyof Task, value: any) => void, handleDeleteTask: (id: string) => void }) => {
+const DataEntryView = ({ tasks, handleUpdateTask, handleDeleteTask, handleAddTask }: {
+    tasks: Task[],
+    handleUpdateTask: (id: string, field: keyof Task, value: any) => void,
+    handleDeleteTask: (id: string) => void,
+    handleAddTask: () => void,
+}) => {
     return (
-        <div className="overflow-x-auto">
-            <table className="border-collapse">
-                <thead className="text-sm">
-                    <tr className="border-b">
-                        <th className="p-2 text-left font-semibold text-muted-foreground border-b border-r sticky left-0 bg-background z-10">Tâche</th>
+        <div className="bg-white rounded-lg shadow-md p-4">
+            <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                    <thead>
+                        <tr className="border-b-2">
+                            <th className="p-2 text-left font-semibold text-muted-foreground">Tâche</th>
+                            <th className="p-2 text-left font-semibold text-muted-foreground">Durée</th>
+                            <th className="p-2 text-left font-semibold text-muted-foreground">Prédécesseurs</th>
+                            <th className="p-2 text-center font-semibold text-muted-foreground">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                         {tasks.map(task => (
-                            <th key={task.id} className="p-2 text-center font-bold text-primary border-b border-r">{task.name}</th>
+                            <tr key={task.id} className="border-b">
+                                <td className="p-2 font-bold text-primary">{task.name}</td>
+                                <td className="p-1">
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        value={task.duration}
+                                        onChange={(e) => handleUpdateTask(task.id, 'duration', parseInt(e.target.value) || 0)}
+                                        className="w-24 h-8"
+                                    />
+                                </td>
+                                <td className="p-1">
+                                    <Input
+                                        value={task.predecessors}
+                                        onChange={(e) => handleUpdateTask(task.id, 'predecessors', e.target.value)}
+                                        placeholder="Ex: a,b"
+                                        className="w-32 h-8"
+                                    />
+                                </td>
+                                <td className="p-1 text-center">
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteTask(task.id)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Supprimer la tâche</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </td>
+                            </tr>
                         ))}
-                    </tr>
-                    <tr className="border-b">
-                        <td className="p-2 text-left font-semibold text-muted-foreground border-b border-r sticky left-0 bg-background z-10">Durée</td>
-                        {tasks.map(task => (
-                            <td key={task.id} className="p-1 border-b border-r">
-                                <Input
-                                    type="number"
-                                    min="0"
-                                    value={task.duration}
-                                    onChange={(e) => handleUpdateTask(task.id, 'duration', parseInt(e.target.value) || 0)}
-                                    className="w-20 mx-auto h-8 text-center"
-                                />
-                            </td>
-                        ))}
-                    </tr>
-                    <tr className="border-b-2">
-                        <td className="p-2 text-left font-semibold text-muted-foreground border-b border-r sticky left-0 bg-background z-10">Prédécesseurs</td>
-                        {tasks.map(task => (
-                            <td key={task.id} className="p-1 border-b border-r">
-                                <Input
-                                    value={task.predecessors}
-                                    onChange={(e) => handleUpdateTask(task.id, 'predecessors', e.target.value)}
-                                    placeholder="Ex: a,b"
-                                    className="w-20 mx-auto h-8 text-center"
-                                />
-                            </td>
-                        ))}
-                    </tr>
-                     <tr className="border-b-2">
-                        <td className="p-2 text-left font-semibold text-muted-foreground border-b border-r sticky left-0 bg-background z-10">Actions</td>
-                        {tasks.map(task => (
-                            <td key={task.id} className="p-1 text-center border-r">
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteTask(task.id)}>
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Supprimer la tâche</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </td>
-                        ))}
-                    </tr>
-                </thead>
-            </table>
+                    </tbody>
+                </table>
+            </div>
+            <div className="mt-4">
+                 <Button onClick={handleAddTask} variant="outline" size="sm"><PlusCircle className="mr-2 h-4 w-4" />Ajouter une nouvelle tâche</Button>
+            </div>
         </div>
     );
 }
@@ -212,6 +211,7 @@ export default function Home() {
         const successors = tasks.filter(t => t.predecessors.split(',').map(p=>p.trim()).includes(task.name));
         return { ...task, successors: successors.map(s => s.name) };
     });
+    // Basic deep compare to avoid infinite loops
     if(JSON.stringify(newTasks) !== JSON.stringify(tasks)) {
         setTasks(newTasks);
     }
@@ -242,20 +242,28 @@ export default function Home() {
           const task = taskMap[taskName];
           if(!task) return;
 
-          criticalPathTasks.add(taskName);
+          // A task is on the critical path if its float is 0 (or close to it)
+          if(task.float !== null && task.float <= 0.001) {
+             criticalPathTasks.add(taskName);
+          } else {
+            return; // Stop searching this branch
+          }
 
           if (task.predecessors.length === 0) return;
 
           const predNames = task.predecessors.split(',').map(p => p.trim()).filter(Boolean);
           for (const predName of predNames) {
               const predTask = taskMap[predName];
-              if (predTask && predTask.ef === task.es) {
+              // Traverse backwards if the predecessor is also critical and its end time matches current task start time
+              if (predTask && predTask.float !== null && predTask.float <= 0.001 && predTask.ef === task.es) {
                   findPath(predName);
               }
           }
       };
       
-      endTasks.forEach(t => findPath(t.name));
+      // Start from critical end tasks
+      const criticalEndTasks = endTasks.filter(t => t.float !== null && t.float <= 0.001);
+      criticalEndTasks.forEach(t => findPath(t.name));
 
       setTasks(prev => prev.map(t => ({...t, isCritical: criticalPathTasks.has(t.name) })));
       toast({ title: "Chemin critique calculé", description: "Le chemin critique a été mis en évidence en rouge." });
@@ -277,16 +285,16 @@ export default function Home() {
       task.id === id ? { ...task, [field]: value } : task
     );
     setTasks(newTasks);
+    if(field === 'duration' || field === 'predecessors'){
+        handleReset();
+    }
   };
 
   const handleAddTask = () => {
-    const newId = (tasks.length > 0 ? Math.max(...tasks.map(t => parseInt(t.id.replace(/[^0-9]/g, ''), 10) || 0)) : 0) + 1).toString();
-
     const existingNames = new Set(tasks.map(t => t.name));
     let newName = '';
-    // Find the next available letter of the alphabet
     for (let i = 0; ; i++) {
-        let tempName = String.fromCharCode(97 + i); // 97 is 'a'
+        let tempName = String.fromCharCode(97 + i);
         if (!existingNames.has(tempName)) {
             newName = tempName;
             break;
@@ -324,7 +332,6 @@ export default function Home() {
 
     if (esStep >= sortedTasks.length - 1) {
       toast({ title: "Calcul des dates au plus tôt terminé.", description: "Vous pouvez maintenant calculer les dates au plus tard." });
-      calculateAndSetCriticalPath();
       return;
     }
 
@@ -343,13 +350,14 @@ export default function Home() {
   };
 
   const handleLsStep = () => {
-    const esDone = esStep === tasks.length - 1;
+    const esDone = esStep >= sortedTasks.length - 1;
     if (!esDone) {
       toast({ variant: "destructive", title: "Prérequis non satisfait", description: "Veuillez d'abord terminer le calcul des dates au plus tôt." });
       return;
     }
     if (lsStep >= sortedTasks.length - 1) {
-      toast({ title: "Calcul des dates au plus tard terminé", description: "Toutes les tâches ont été traitées. La marge est à jour." });
+      toast({ title: "Calcul des dates au plus tard terminé", description: "Le chemin critique peut maintenant être déterminé." });
+      calculateAndSetCriticalPath();
       return;
     }
 
@@ -397,16 +405,16 @@ export default function Home() {
     }
   };
 
-  const allEsDone = esStep === tasks.length - 1;
-  const allLsDone = lsStep === tasks.length - 1;
+  const allEsDone = esStep >= sortedTasks.length - 1;
+  const allLsDone = lsStep >= sortedTasks.length - 1;
 
   return (
     <TooltipProvider>
       <div className="flex flex-col h-screen bg-background text-foreground font-sans antialiased">
         <header className="flex items-center justify-between p-4 border-b shrink-0 bg-slate-100">
             <div className="flex items-center gap-4">
-                <div className="bg-green-600 text-white p-2 text-center font-bold">RECHERCHE<br/>OPERATIONNELLE</div>
-                <h1 className="text-3xl font-bold text-red-700">Chemin critique</h1>
+                <div className="bg-primary text-primary-foreground p-2 text-center font-bold">RECHERCHE<br/>OPERATIONNELLE</div>
+                <h1 className="text-3xl font-bold text-destructive">Chemin critique (PERT)</h1>
             </div>
           <div className="flex items-center gap-2">
             {isCyclic && (
@@ -422,7 +430,9 @@ export default function Home() {
                 </TooltipContent>
               </Tooltip>
             )}
-            <Button onClick={handleAddTask} variant="outline" size="sm" disabled={view === 'calculation'}><PlusCircle className="mr-2 h-4 w-4" />Ajouter Tâche</Button>
+            <Button onClick={() => setView(view === 'data' ? 'calculation' : 'data')} variant="outline" size="sm">
+                {view === 'data' ? 'Voir Calcul' : 'Voir Données'}
+            </Button>
             <Button onClick={handleOptimize} disabled={isOptimizing || isCyclic || view === 'calculation'} variant="outline" size="sm">
               {isOptimizing ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
               Optimiseur (IA)
@@ -439,11 +449,11 @@ export default function Home() {
 
         <main className="flex-grow overflow-auto p-8 bg-slate-200">
            {view === 'data' ? (
-              <DataEntryView tasks={tasks} handleUpdateTask={handleUpdateTask} handleDeleteTask={handleDeleteTask}/>
+              <DataEntryView tasks={tasks} handleUpdateTask={handleUpdateTask} handleDeleteTask={handleDeleteTask} handleAddTask={handleAddTask} />
             ) : (
-                <div className="flex flex-wrap gap-1">
-                    {tasks.map(task => (
-                        <TaskCard key={task.id} task={task} allTasks={tasks} highlighted={highlightedTaskId === task.id}/>
+                <div className="flex gap-4 pb-4">
+                    {sortedTasks.map(task => (
+                        <TaskCard key={task.id} task={task} highlighted={highlightedTaskId === task.id}/>
                     ))}
                 </div>
             )}
@@ -454,5 +464,3 @@ export default function Home() {
     </TooltipProvider>
   );
 }
-
-    
