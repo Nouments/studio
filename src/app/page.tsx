@@ -6,7 +6,7 @@ import type { Task } from "./types";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
-import { Play, RotateCcw, AlertCircle, Loader } from "lucide-react";
+import { Play, RotateCcw, AlertCircle } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import {
@@ -45,49 +45,39 @@ const INITIAL_TASKS: Task[] = [
     { id: 'F', name: 'F', duration: 0, predecessors: 'u,v,w', successors: [], es: null, ef: null, ls: null, lf: null, float: null, isCritical: false, isCompleted: false },
 ];
 
-const CalculationCell = ({ task, taskMap }: { task: Task, taskMap: Record<string, Task> }) => {
-    const preds = task.predecessors.split(',').map(p => p.trim()).filter(Boolean);
-
+const CalculationCell = ({ task }: { task: Task }) => {
     const cellClasses = cn(
-        "bg-white w-48 shrink-0 flex flex-col",
-        task.isCritical && "text-destructive"
+        "bg-white w-48 shrink-0 border border-black",
+        task.isCritical && "text-destructive border-destructive"
     );
 
-    const mainContent = (
-        <div className={cn("grid grid-cols-[1fr_2fr_1fr] text-center border-t border-black", task.isCritical && "border-destructive")}>
-            <div className={cn("p-1 font-bold border-r border-black", task.isCritical && "border-destructive")}>{task.es ?? ''}</div>
-            <div className={cn("p-1")}>
-                <span className="font-bold">{task.name}</span>
-                <span> {task.duration}</span>
-            </div>
-            <div className={cn("p-1 font-bold border-l border-black", task.isCritical && "border-destructive")}>{task.ef ?? ''}</div>
-        </div>
-    );
-    
     return (
         <div className={cellClasses}>
-             <div className="grid grid-cols-[1fr_2fr_1fr] text-center flex-grow">
-                 <div className={cn("p-1 border-r border-black", task.isCritical && "border-destructive")}>{task.ls ?? ''}</div>
-                 <div className="p-1 font-bold">{task.name}</div>
-                 <div className={cn("p-1 border-l border-black", task.isCritical && "border-destructive")}>{task.lf ?? ''}</div>
+            {/* Top Row: ES, Name/Duration, EF */}
+            <div className={cn("grid grid-cols-[1fr_2fr_1fr] text-center border-b border-black", task.isCritical && "border-destructive")}>
+                <div className={cn("p-2 font-bold border-r border-black", task.isCritical && "border-destructive")}>{task.es ?? ''}</div>
+                <div className="p-2 font-bold">
+                    <span>{task.name}</span>
+                    <span className="ml-2">{task.duration}</span>
+                </div>
+                <div className={cn("p-2 font-bold border-l border-black", task.isCritical && "border-destructive")}>{task.ef ?? ''}</div>
             </div>
-            {preds.length > 1 && preds.map(predName => {
-                const predTask = taskMap[predName];
-                if (!predTask) return null;
-                return (
-                    <div key={predName} className={cn("grid grid-cols-[1fr_2fr_1fr] text-center border-t border-black text-sm text-muted-foreground", predTask.isCritical && "text-destructive", task.isCritical && "border-destructive")}>
-                         <div className={cn("p-1 border-r border-black", predTask.isCritical && "border-destructive")}>{predTask.es}</div>
-                         <div className="p-1 ">{predTask.name} {predTask.duration}</div>
-                         <div className={cn("p-1 border-l border-black", predTask.isCritical && "border-destructive")}>{predTask.ef}</div>
-                    </div>
-                )
-            })}
-             {mainContent}
+
+            {/* Bottom Row: LS, Float, LF */}
+            <div className={cn("grid grid-cols-[1fr_2fr_1fr] text-center")}>
+                <div className={cn("p-2 font-bold border-r border-black", task.isCritical && "border-destructive")}>{task.ls ?? ''}</div>
+                <div className="p-2 font-bold text-sm text-muted-foreground">
+                    {/* The float is the "marge" */}
+                    {task.float !== null ? `Marge = ${task.float}`: ''}
+                </div>
+                <div className={cn("p-2 font-bold border-l border-black", task.isCritical && "border-destructive")}>{task.lf ?? ''}</div>
+            </div>
         </div>
     );
 };
 
-const CalculationView = ({ tasks, taskMap }: { tasks: Task[], taskMap: Record<string, Task> }) => {
+
+const CalculationView = ({ tasks }: { tasks: Task[] }) => {
     if (tasks.length === 0) {
         return <div className="p-8 text-center text-muted-foreground">Aucune tâche à afficher.</div>
     }
@@ -96,7 +86,7 @@ const CalculationView = ({ tasks, taskMap }: { tasks: Task[], taskMap: Record<st
             <div className="overflow-x-auto pb-4">
                 <div className="flex flex-nowrap gap-px bg-black border border-black p-px">
                      {tasks.map(task => (
-                        <CalculationCell key={task.id} task={task} taskMap={taskMap} />
+                        <CalculationCell key={task.id} task={task} />
                     ))}
                 </div>
             </div>
@@ -162,60 +152,6 @@ export default function Home() {
         setHighlightedTaskId(taskId);
         setTimeout(() => setHighlightedTaskId(null), 500);
     };
-    
-    const calculateAndSetCriticalPath = useCallback(() => {
-        const finalTasks = tasks.map(task => {
-            if (task.es !== null && task.ls !== null) {
-                const float = task.ls - task.es;
-                return { ...task, float };
-            }
-            return task;
-        }).map((task, _, allTasks) => {
-             const taskMap = allTasks.reduce((acc, t) => {
-              acc[t.name] = t;
-              return acc;
-            }, {} as Record<string, Task>);
-
-            if (task.float !== null && Math.abs(task.float) < 0.001) {
-                const preds = task.predecessors.split(',').map(p => p.trim()).filter(Boolean);
-                const isCriticalPred = preds.length > 0 && preds.every(pName => {
-                    const pTask = taskMap[pName];
-                    return pTask && pTask.isCritical && pTask.ef === task.es;
-                });
-                
-                if (preds.length === 0 || isCriticalPred) {
-                    return { ...task, isCritical: true };
-                }
-            }
-            return task;
-        });
-
-       let criticalPathTasks = new Set<string>();
-       const endTask = finalTasks.find(t => t.name === 'F');
-
-       const findPath = (taskName: string) => {
-           if (criticalPathTasks.has(taskName)) return;
-           const task = taskMap[taskName];
-           if (!task || task.float === null || Math.abs(task.float) > 0.001) return;
-
-           criticalPathTasks.add(taskName);
-           const predNames = task.predecessors.split(',').map(p => p.trim()).filter(Boolean);
-           for (const predName of predNames) {
-               const predTask = taskMap[predName];
-               if (predTask && predTask.ef === task.es) {
-                   findPath(predName);
-               }
-           }
-       };
-
-       if(endTask && endTask.float !== null && Math.abs(endTask.float) < 0.001){
-           findPath('F');
-       }
-
-       setTasks(prev => prev.map(t => ({...t, isCritical: criticalPathTasks.has(t.name) })));
-       toast({ title: "Chemin critique calculé", description: "Le chemin critique a été mis en évidence en rouge." });
-    }, [tasks, toast]);
-
 
     const handleReset = useCallback(() => {
         setTasks(prevTasks => prevTasks.map(t => ({
@@ -339,11 +275,10 @@ export default function Home() {
                     </div>
                 </header>
 
-                <CalculationView tasks={sortedTasks} taskMap={taskMap} />
+                <CalculationView tasks={sortedTasks} />
 
                 <Toaster />
             </div>
         </TooltipProvider>
     );
 }
-
