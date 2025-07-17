@@ -6,7 +6,7 @@ import type { Task } from "./types";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, Trash2, Plus, GanttChartSquare, ChevronsRight, ChevronsLeft } from "lucide-react";
+import { AlertCircle, Trash2, Plus, ChevronsRight, ChevronsLeft } from "lucide-react";
 import {
     Tooltip,
     TooltipProvider,
@@ -53,11 +53,6 @@ const INITIAL_TASKS: Task[] = [
 ];
 
 const CalculationCell = ({ task }: { task: Task }) => {
-    const predecessorTasks = task.predecessors
-        .split(',')
-        .map(p => p.trim())
-        .filter(Boolean);
-
     const cellClasses = cn(
         "bg-white w-48 shrink-0 border border-black flex flex-col justify-between",
         task.isCritical && "border-destructive"
@@ -159,8 +154,7 @@ export default function Home() {
         }
         const taskList = tasks.map(t => ({...t, successors: [] as string[]}));
         const taskMapByName = new Map(taskList.map(t => [t.name, t]));
-        const inDegree = new Map(taskList.map(t => [t.name, 0]));
-
+        
         for (const task of taskList) {
             const predNames = task.predecessors.split(',').map(p => p.trim()).filter(Boolean);
             for (const predName of predNames) {
@@ -171,6 +165,7 @@ export default function Home() {
             }
         }
         
+        const inDegree = new Map(taskList.map(t => [t.name, 0]));
         for (const task of taskList) {
             const predNames = task.predecessors.split(',').map(p => p.trim()).filter(Boolean);
             inDegree.set(task.name, predNames.length);
@@ -184,12 +179,10 @@ export default function Home() {
             sortedNames.push(currentTask.name);
             
             for (const successorName of currentTask.successors) {
-                const successorTask = taskMapByName.get(successorName);
-                if (successorTask) {
-                    inDegree.set(successorName, inDegree.get(successorName)! - 1);
-                    if (inDegree.get(successorName) === 0) {
-                        queue.push(successorTask);
-                    }
+                inDegree.set(successorName, inDegree.get(successorName)! - 1);
+                if (inDegree.get(successorName) === 0) {
+                    const successorTask = taskMapByName.get(successorName);
+                    if(successorTask) queue.push(successorTask);
                 }
             }
         }
@@ -213,6 +206,7 @@ export default function Home() {
             return;
         }
 
+        // --- Earliest Times Calculation ---
         let processedTasks = new Map<string, Task>();
         for (const currentTask of topologicallySorted) {
             const predNames = currentTask.predecessors.split(',').map(p => p.trim()).filter(Boolean);
@@ -223,27 +217,13 @@ export default function Home() {
             
             processedTasks.set(currentTask.name, { ...currentTask, es, ef, ls: null, lf: null, float: null, isCritical: false });
         }
-        
-        const tasksWithES = Array.from(processedTasks.values())
-            .sort((a, b) => topologicallySorted.findIndex(t => t.name === a.name) - topologicallySorted.findIndex(t => t.name === b.name));
+        const tasksWithES = Array.from(processedTasks.values());
 
-        setCalculatedTasks(tasksWithES);
-        setCriticalPath(null);
-        setEarliestDone(true);
-        toast({ title: "Calcul des dates au plus tôt terminé!", description: "Vous pouvez maintenant calculer les dates au plus tard." });
-    }, [isCyclic, topologicallySorted, toast]);
-
-
-    const handleCalculateLatest = useCallback(() => {
-        if (!earliestDone || calculatedTasks.length === 0) {
-            toast({ variant: "destructive", title: "Erreur", description: "Veuillez d'abord calculer les dates au plus tôt." });
-            return;
-        }
-
+        // --- Latest Times Calculation (for critical path) ---
         const reversedSortedTasks = [...topologicallySorted].reverse();
-        const projectFinishDate = Math.max(...calculatedTasks.map(t => t.ef ?? 0));
+        const projectFinishDate = Math.max(...tasksWithES.map(t => t.ef ?? 0));
         
-        let finalTasksMap = new Map<string, Task>(calculatedTasks.map(t => [t.name, {...t, lf: projectFinishDate}]));
+        let finalTasksMap = new Map<string, Task>(tasksWithES.map(t => [t.name, {...t, lf: projectFinishDate}]));
 
         for(const currentTask of reversedSortedTasks) {
             const taskToUpdate = finalTasksMap.get(currentTask.name)!;
@@ -257,6 +237,7 @@ export default function Home() {
             finalTasksMap.set(currentTask.name, {...taskToUpdate, ls, lf, float});
         }
         
+        // --- Critical Path Identification ---
         const criticalPathTasks = new Set<string>();
         const findPath = (taskName: string) => {
             if (criticalPathTasks.has(taskName)) return;
@@ -278,7 +259,13 @@ export default function Home() {
           findPath(endNode);
         }
 
-        const finalTasksWithCritical = Array.from(finalTasksMap.values()).map(t => ({...t, isCritical: criticalPathTasks.has(t.name) }));
+        const finalTasksWithCritical = Array.from(finalTasksMap.values()).map(t => ({
+            ...t, 
+            isCritical: criticalPathTasks.has(t.name),
+            // We hide LS/LF values until the user clicks the "latest" button
+            ls: null, 
+            lf: null
+        }));
         
         const criticalPathArray = topologicallySorted
              .filter(t => criticalPathTasks.has(t.name))
@@ -286,7 +273,37 @@ export default function Home() {
              
         setCriticalPath(criticalPathArray.join(' - '));
         setCalculatedTasks(finalTasksWithCritical.sort((a, b) => topologicallySorted.findIndex(t => t.name === a.name) - topologicallySorted.findIndex(t => t.name === b.name)));
-        toast({ title: "Graphique généré!", description: "Le chemin critique a été calculé et affiché." });
+        setEarliestDone(true);
+        toast({ title: "Calcul au plus tôt terminé!", description: "Le chemin critique a été calculé. Vous pouvez maintenant calculer les dates au plus tard." });
+    }, [isCyclic, topologicallySorted, toast]);
+
+
+    const handleCalculateLatest = useCallback(() => {
+        if (!earliestDone || calculatedTasks.length === 0) {
+            toast({ variant: "destructive", title: "Erreur", description: "Veuillez d'abord calculer les dates au plus tôt." });
+            return;
+        }
+
+        const reversedSortedTasks = [...topologicallySorted].reverse();
+        const projectFinishDate = Math.max(...calculatedTasks.map(t => t.ef ?? 0));
+        
+        let finalTasksMap = new Map<string, Task>(calculatedTasks.map(t => [t.name, {...t, lf: projectFinishDate}]));
+
+        for(const currentTask of reversedSortedTasks) {
+            const taskToUpdate = finalTasksMap.get(currentTask.name)!;
+            const successors = topologicallySorted.filter(t => t.predecessors.split(',').map(p => p.trim()).includes(currentTask.name));
+            const succTasks = successors.map(s => finalTasksMap.get(s.name)).filter((t): t is Task => !!t);
+
+            const lf = succTasks.length > 0 ? Math.min(...succTasks.map(s => s.ls ?? Infinity)) : projectFinishDate;
+            const ls = lf - taskToUpdate.duration;
+            
+            finalTasksMap.set(currentTask.name, {...taskToUpdate, ls, lf});
+        }
+        
+        const finalTasksWithLatest = Array.from(finalTasksMap.values());
+        
+        setCalculatedTasks(finalTasksWithLatest.sort((a, b) => topologicallySorted.findIndex(t => t.name === a.name) - topologicallySorted.findIndex(t => t.name === b.name)));
+        toast({ title: "Calcul au plus tard terminé!", description: "Les dates au plus tard ont été affichées." });
     }, [earliestDone, calculatedTasks, topologicallySorted, toast]);
 
 
@@ -367,10 +384,10 @@ export default function Home() {
                             </Button>
                              <div className="flex gap-4">
                                 <Button onClick={handleCalculateEarliest} disabled={isCyclic} size="lg" variant="outline">
-                                    <ChevronsRight className="mr-2 h-5 w-5" /> Calculer au plus tôt
+                                    <ChevronsRight className="mr-2 h-5 w-5" /> Calculer au plus tôt & Chemin Critique
                                 </Button>
                                 <Button onClick={handleCalculateLatest} disabled={!earliestDone || isCyclic} size="lg">
-                                    <ChevronsLeft className="mr-2 h-5 w-5" /> Calculer au plus tard & Critique
+                                    <ChevronsLeft className="mr-2 h-5 w-5" /> Calculer au plus tard
                                 </Button>
                              </div>
                         </div>
