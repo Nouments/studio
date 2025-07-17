@@ -1,26 +1,26 @@
 
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import type { Task } from "./types";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, Trash2, Plus, GanttChartSquare } from "lucide-react";
+import { AlertCircle, Trash2, Plus, GanttChartSquare, ChevronsRight, ChevronsLeft } from "lucide-react";
 import {
-  Tooltip,
-  TooltipProvider,
-  TooltipContent,
-  TooltipTrigger,
+    Tooltip,
+    TooltipProvider,
+    TooltipContent,
+    TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
+    Table,
+    TableHeader,
+    TableRow,
+    TableHead,
+    TableBody,
+    TableCell,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
@@ -71,15 +71,14 @@ const CalculationCell = ({ task }: { task: Task }) => {
             <div className={cn("p-2 text-center border-b border-black", task.isCritical && "border-destructive")}>
                 <div className="flex justify-between items-center">
                     <span className={cn(textClasses(task.isCritical), "font-bold")}>{task.es ?? ''}</span>
-                    <span className={cn(textClasses(task.isCritical), "font-bold text-lg")}>{task.name.toUpperCase()}</span>
-                    <span className={cn(textClasses(task.isCritical), "font-bold")}>{task.duration}</span>
+                    <span className={cn(textClasses(task.isCritical), "font-bold text-lg")}>{task.duration}</span>
                     <span className={cn(textClasses(task.isCritical), "font-bold")}>{task.ef ?? ''}</span>
                 </div>
             </div>
 
             <div className="p-2 flex-grow flex flex-col justify-center">
                 <div className={cn("text-center font-bold", textClasses(task.isCritical))}>
-                    {task.name}
+                    {task.name.toUpperCase()}
                 </div>
                  <div className="text-center text-sm text-muted-foreground">
                     ({task.predecessors})
@@ -126,11 +125,16 @@ export default function Home() {
     const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
     const [calculatedTasks, setCalculatedTasks] = useState<Task[]>([]);
     const [criticalPath, setCriticalPath] = useState<string | null>(null);
+    const [earliestDone, setEarliestDone] = useState(false);
 
     const handleTaskChange = (id: string, field: keyof Task, value: string | number) => {
         setTasks(prevTasks =>
             prevTasks.map(task => (task.id === id ? { ...task, [field]: value } : task))
         );
+        // Reset calculations if tasks change
+        setCalculatedTasks([]);
+        setCriticalPath(null);
+        setEarliestDone(false);
     };
 
     const handleAddTask = () => {
@@ -143,9 +147,16 @@ export default function Home() {
 
     const handleRemoveTask = (id: string) => {
         setTasks(prevTasks => prevTasks.filter(task => task.id !== id));
+        // Reset calculations if tasks change
+        setCalculatedTasks([]);
+        setCriticalPath(null);
+        setEarliestDone(false);
     };
 
     const { sortedTasks: topologicallySorted, isCyclic } = useMemo(() => {
+        if (!tasks || tasks.length === 0) {
+             return { sortedTasks: [], isCyclic: false };
+        }
         const taskList = tasks.map(t => ({...t, successors: [] as string[]}));
         const taskMapByName = new Map(taskList.map(t => [t.name, t]));
         const inDegree = new Map(taskList.map(t => [t.name, 0]));
@@ -183,7 +194,7 @@ export default function Home() {
             }
         }
         
-        const isCyclic = sortedNames.length !== tasks.length;
+        const isCyclicCheck = sortedNames.length !== tasks.length;
         const finalSortedTasks = sortedNames.map(name => {
             const stateTask = tasks.find(t => t.name === name)!;
             const taskWithSuccessors = taskMapByName.get(name)!;
@@ -193,16 +204,15 @@ export default function Home() {
             };
         });
 
-        return { sortedTasks: finalSortedTasks, isCyclic };
+        return { sortedTasks: finalSortedTasks, isCyclic: isCyclicCheck };
     }, [tasks]);
 
-    const handleGenerateChart = () => {
+    const handleCalculateEarliest = useCallback(() => {
         if (isCyclic) {
             toast({ variant: "destructive", title: "Erreur", description: "Dépendance cyclique détectée. Veuillez corriger les prédécesseurs." });
             return;
         }
 
-        // --- Earliest Start/Finish Calculation ---
         let processedTasks = new Map<string, Task>();
         for (const currentTask of topologicallySorted) {
             const predNames = currentTask.predecessors.split(',').map(p => p.trim()).filter(Boolean);
@@ -211,17 +221,29 @@ export default function Home() {
             const es = predTasks.length > 0 ? Math.max(...predTasks.map(p => p.ef ?? 0)) : 0;
             const ef = es + currentTask.duration;
             
-            processedTasks.set(currentTask.name, { ...currentTask, es, ef });
+            processedTasks.set(currentTask.name, { ...currentTask, es, ef, ls: null, lf: null, float: null, isCritical: false });
         }
         
-        let tasksWithES = Array.from(processedTasks.values());
+        const tasksWithES = Array.from(processedTasks.values())
+            .sort((a, b) => topologicallySorted.findIndex(t => t.name === a.name) - topologicallySorted.findIndex(t => t.name === b.name));
 
-        // --- Latest Start/Finish & Critical Path Calculation ---
+        setCalculatedTasks(tasksWithES);
+        setCriticalPath(null);
+        setEarliestDone(true);
+        toast({ title: "Calcul des dates au plus tôt terminé!", description: "Vous pouvez maintenant calculer les dates au plus tard." });
+    }, [isCyclic, topologicallySorted, toast]);
+
+
+    const handleCalculateLatest = useCallback(() => {
+        if (!earliestDone || calculatedTasks.length === 0) {
+            toast({ variant: "destructive", title: "Erreur", description: "Veuillez d'abord calculer les dates au plus tôt." });
+            return;
+        }
+
         const reversedSortedTasks = [...topologicallySorted].reverse();
-        const finalTask = tasksWithES.find(t => t.name === reversedSortedTasks[0].name);
-        const projectFinishDate = finalTask?.ef ?? Math.max(...tasksWithES.map(t => t.ef ?? 0));
+        const projectFinishDate = Math.max(...calculatedTasks.map(t => t.ef ?? 0));
         
-        let finalTasksMap = new Map<string, Task>(tasksWithES.map(t => [t.name, {...t, ls: null, lf: projectFinishDate, float: null, isCritical: false}]));
+        let finalTasksMap = new Map<string, Task>(calculatedTasks.map(t => [t.name, {...t, lf: projectFinishDate}]));
 
         for(const currentTask of reversedSortedTasks) {
             const taskToUpdate = finalTasksMap.get(currentTask.name)!;
@@ -265,7 +287,8 @@ export default function Home() {
         setCriticalPath(criticalPathArray.join(' - '));
         setCalculatedTasks(finalTasksWithCritical.sort((a, b) => topologicallySorted.findIndex(t => t.name === a.name) - topologicallySorted.findIndex(t => t.name === b.name)));
         toast({ title: "Graphique généré!", description: "Le chemin critique a été calculé et affiché." });
-    };
+    }, [earliestDone, calculatedTasks, topologicallySorted, toast]);
+
 
     return (
         <TooltipProvider>
@@ -342,9 +365,14 @@ export default function Home() {
                             <Button onClick={handleAddTask}>
                                 <Plus className="mr-2 h-4 w-4" /> Ajouter une tâche
                             </Button>
-                             <Button onClick={handleGenerateChart} disabled={isCyclic} size="lg">
-                                <GanttChartSquare className="mr-2 h-5 w-5" /> Générer le Graphique
-                            </Button>
+                             <div className="flex gap-4">
+                                <Button onClick={handleCalculateEarliest} disabled={isCyclic} size="lg" variant="outline">
+                                    <ChevronsRight className="mr-2 h-5 w-5" /> Calculer au plus tôt
+                                </Button>
+                                <Button onClick={handleCalculateLatest} disabled={!earliestDone || isCyclic} size="lg">
+                                    <ChevronsLeft className="mr-2 h-5 w-5" /> Calculer au plus tard & Critique
+                                </Button>
+                             </div>
                         </div>
                     </div>
                 </main>
@@ -357,3 +385,4 @@ export default function Home() {
     );
 }
 
+    
